@@ -127,6 +127,10 @@ export default {
         '登峰造极': false,
         '出神入化': false,
         '绝世无双': false,
+        '绝世无双-Pro': false,
+        '绝世无双-Ultra': false,
+        '绝世无双-Plus': false,
+        '绝世无双-Max': false,
       },
       maxLevel: 1,
       maxScore: 0,
@@ -174,15 +178,27 @@ export default {
       const baseSaturation = 70 + Math.random() * 20;
       const baseLightness = 50 + Math.random() * 20;
 
-      const hueDiff = Math.max(20 - this.level, 5);
+      // 使用非线性公式动态调整差异
+      const hueDiff = Math.max(20 / Math.floor(1 + this.level / 5), 8); // 色相差异逐渐趋近 5
+      const saturationDiff = Math.max(15 / Math.floor(1 + this.level / 7), 8); // 饱和度差异逐渐趋近 5
+      const lightnessDiff = Math.max(10 / Math.floor(1 + this.level / 9), 5); // 亮度差异逐渐趋近 2
+
+      // 增大绿色区域的差异
+      let adjustedHueDiff = hueDiff;
+      if (baseHue >= 100 && baseHue <= 140) {
+        adjustedHueDiff += 6; // 绿色区域额外增加差异
+      }
 
       this.colors = Array(this.totalSquares).fill(0).map(() => {
         return `hsl(${baseHue}, ${baseSaturation}%, ${baseLightness}%)`;
       });
 
       this.targetIndex = Math.floor(Math.random() * this.totalSquares);
-      const targetHue = (baseHue + hueDiff) % 360;
-      this.colors[this.targetIndex] = `hsl(${targetHue}, ${baseSaturation}%, ${baseLightness}%)`;
+      const targetHue = (baseHue + adjustedHueDiff) % 360;
+      const targetSaturation = Math.max(baseSaturation - saturationDiff, 50);
+      const targetLightness = Math.min(baseLightness + lightnessDiff, 100);
+
+      this.colors[this.targetIndex] = `hsl(${targetHue}, ${targetSaturation}%, ${targetLightness}%)`;
     },
 
     handleColorClick(index) {
@@ -226,6 +242,10 @@ export default {
       if (this.level >= 35) this.achievements['登峰造极'] = true;
       if (this.level >= 40) this.achievements['出神入化'] = true;
       if (this.level >= 50) this.achievements['绝世无双'] = true;
+      if (this.level >= 60) this.achievements['绝世无双-Pro'] = true;
+      if (this.level >= 70) this.achievements['绝世无双-Ultra'] = true;
+      if (this.level >= 80) this.achievements['绝世无双-Plus'] = true;
+      if (this.level >= 100) this.achievements['绝世无双-Max'] = true;
 
       // 检查新解锁的成就
       Object.entries(this.achievements).forEach(([title, achieved]) => {
@@ -262,7 +282,9 @@ export default {
       const savedData = localStorage.getItem('colorGameData');
       if (savedData) {
         const { achievements } = JSON.parse(savedData);
-        this.achievements = achievements;
+        if (Object.keys(achievements).length >= Object.keys(this.achievements).length) {
+          this.achievements = achievements;
+        }
       }
 
       const savedMaxLevel = localStorage.getItem('maxLevel');
