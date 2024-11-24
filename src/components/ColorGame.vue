@@ -570,7 +570,7 @@ export default {
 
 .reward-width,
 .gameover-width {
-  width: 15%;
+  width: 35%;
 }
 
 @keyframes slideIn {
