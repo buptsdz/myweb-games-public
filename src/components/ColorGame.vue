@@ -91,6 +91,7 @@
           </template>
         </el-table-column>
         <el-table-column prop="username" label="用户名"></el-table-column>
+        <el-table-column prop="achievement" label="头衔"></el-table-column>
         <el-table-column prop="max_score" label="分数" width="100"></el-table-column>
         <el-table-column prop="record_broken_at" label="破纪录时间" width="180"></el-table-column>
       </el-table>
@@ -179,9 +180,9 @@ export default {
       const baseLightness = 50 + Math.random() * 20;
 
       // 使用非线性公式动态调整差异
-      const hueDiff = Math.max(20 / Math.floor(1 + this.level / 5), 8); // 色相差异逐渐趋近 5
-      const saturationDiff = Math.max(15 / Math.floor(1 + this.level / 7), 8); // 饱和度差异逐渐趋近 5
-      const lightnessDiff = Math.max(10 / Math.floor(1 + this.level / 9), 5); // 亮度差异逐渐趋近 2
+      const hueDiff = Math.max(20 / Math.floor(1 + this.level / 5), 6); // 色相差异逐渐趋近 5
+      const saturationDiff = Math.max(15 / Math.floor(1 + this.level / 7), 6); // 饱和度差异逐渐趋近 5
+      const lightnessDiff = Math.max(10 / Math.floor(1 + this.level / 9), 3); // 亮度差异逐渐趋近 2
 
       // 增大绿色区域的差异
       let adjustedHueDiff = hueDiff;
@@ -221,10 +222,10 @@ export default {
       this.level++;
 
       if (this.level === 6) this.gridSize = 3;
-      if (this.level === 14) this.gridSize = 4;
-      if (this.level === 22) this.gridSize = 5;
-      if (this.level === 30) this.gridSize = 6;
-      if (this.level === 42) this.gridSize = 7;
+      if (this.level === 15) this.gridSize = 4;
+      if (this.level === 23) this.gridSize = 5;
+      if (this.level === 32) this.gridSize = 6;
+      if (this.level === 44) this.gridSize = 7;
 
       this.generateColors();
     },
@@ -384,7 +385,8 @@ export default {
           data: {
             'username': this.uploadForm.username,
             'score': this.score,
-            'level': this.level
+            'level': this.level,
+            'achievement': this.currentAchievement
           }
         });
         const data = response.data;
