@@ -30,7 +30,7 @@
       </div>
     </el-dialog>
 
-    <!-- 游戏结束对话框 -->
+    <!-- 修改后的游戏结束对话框 -->
     <el-dialog title="游戏结束" :visible.sync="showGameOver" customClass="gameover-width" @close="restartGame"
       :close-on-click-modal="false">
       <div class="game-over-content">
@@ -45,18 +45,63 @@
         </div>
       </div>
       <span slot="footer" class="dialog-footer">
-        <el-button type="primary" @click="restartGame">重新开始</el-button>
+        <el-button type="primary" @click="showUploadScore">上传分数</el-button>
+        <el-button @click="restartGame">重新开始</el-button>
       </span>
     </el-dialog>
+
+    <!-- 上传分数对话框 -->
+    <el-dialog title="上传分数" :visible.sync="showUploadDialog" customClass="gameover-width" :close-on-click-modal="false">
+      <el-form :model="uploadForm" :rules="uploadRules" ref="uploadForm">
+        <el-form-item label="留下您的大名，为您获取排名" prop="username">
+          <el-input v-model="uploadForm.username" placeholder="请输入昵称"></el-input>
+        </el-form-item>
+      </el-form>
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="showUploadDialog = false">取消</el-button>
+        <el-button type="primary" @click="submitScore">确定</el-button>
+      </span>
+    </el-dialog>
+
+    <!-- 排名结果对话框 -->
+    <el-dialog title="排名结果" :visible.sync="showRankResult" customClass="gameover-width">
+      <div class="rank-result">
+        <p>恭喜！您当前排名第 <span class="highlight">{{ currentRank }}</span> 名</p>
+        <p v-if="isBreakRecord" class="break-record">新纪录！</p>
+      </div>
+    </el-dialog>
+
     <!-- 显示最大轮数 -->
     <div class="max-level-display">
       <p>最大轮数: {{ maxLevel }}</p>
       <p>最高分: {{ maxScore }}</p>
     </div>
+
+    <!-- 排行榜 -->
+    <div class="leaderboard">
+      <h2 class="leaderboard-title">排行榜</h2>
+      <el-table :data="leaderboardData" style="width: 100%"
+        :header-cell-style="{ background: '#4527A0', color: 'white' }" :row-class-name="setRowClassName">
+        <el-table-column prop="rank" label="排名" width="80" align="center">
+          <template slot-scope="scope">
+            <div class="rank-number" :class="getRankClass(scope.row.rank)">
+              {{ scope.row.rank }}
+            </div>
+          </template>
+        </el-table-column>
+        <el-table-column prop="username" label="用户名"></el-table-column>
+        <el-table-column prop="max_score" label="分数" width="100"></el-table-column>
+        <el-table-column prop="record_broken_at" label="破纪录时间" width="180"></el-table-column>
+      </el-table>
+      <el-button type="text" class="refresh-btn" @click="refreshLeaderboard">
+        <i class="el-icon-refresh"></i> 刷新排行榜
+      </el-button>
+    </div>
   </div>
 </template>
 
 <script>
+import axiosRequest from '@/utils/request';
 export default {
   name: 'ColorGame',
   data() {
@@ -84,11 +129,27 @@ export default {
       },
       maxLevel: 1,
       maxScore: 0,
+      showUploadDialog: false,
+      showRankResult: false,
+      leaderboardData: [],
+      uploadForm: {
+        username: localStorage.getItem('username') || ''
+      },
+      uploadRules: {
+        username: [
+          { required: true, message: '请输入昵称', trigger: 'blur' },
+          { min: 2, max: 30, message: '长度在 2 到 30 个字符', trigger: 'blur' }
+        ]
+      },
+      currentRank: 0,
+      isBreakRecord: false,
+      totalUsers: 0,
     };
   },
   created() {
     this.loadGameData();
     this.generateColors();
+    this.getLeaderboard(); // 获取初始排行榜数据
   },
   computed: {
     totalSquares() {
@@ -127,7 +188,8 @@ export default {
 
       if (index === this.targetIndex) {
         // 答对了
-        this.score += Math.floor(10 * (1 + this.level * 0.1));
+        const randomFactor = Math.random() * 3 * Math.floor(this.level / 5); // 随机浮动值
+        this.score += Math.floor(8 * (1 + this.level * 0.1) + randomFactor);
         this.nextLevel();
         this.checkAchievements();
       } else {
@@ -172,7 +234,7 @@ export default {
             if (this.currentAchievement === title) {
               this.currentAchievement = '';
             }
-          }, 2500);
+          }, 3300);
         }
       });
     },
@@ -217,6 +279,121 @@ export default {
       this.currentAchievement = '';
       this.showGameOver = false;
       this.generateColors();
+    },
+
+    //获得排行榜数据  
+    async getLeaderboard() {
+      try {
+        const response = await axiosRequest.get('/get_colorgame_ranking/');
+        const data = response.data;
+        if (data.status === 200) {
+          this.leaderboardData = data.data.top_ranks;
+          this.totalUsers = data.data.total_users;
+          this.$message.success('排行榜已更新');
+        }
+      } catch (error) {
+        console.error('获取排行榜失败:', error);
+      }
+    },
+
+    //上传分数 
+    async submitScore() {
+      this.$refs.uploadForm.validate(async (valid) => {
+        if (valid) {
+          try {
+            // 检查用户名是否已被使用
+            //console.log(this.uploadForm.username);
+            const checkResponse = await axiosRequest({
+              method: 'post',
+              url: '/check_colorgame_username/',
+              data: {
+                username: this.uploadForm.username
+              }
+            });
+            if (checkResponse.data.status === 400) {
+              // 用户名已存在，提示用户是否继续
+              this.$confirm('用户名已存在，是否继续使用该用户名上传分数？', '提示', {
+                confirmButtonText: '继续',
+                cancelButtonText: '取消',
+                type: 'warning'
+              }).then(() => {
+                // 用户选择继续，执行上传操作
+                this.uploadScore();
+              }).catch(() => {
+                // 用户选择取消，不执行任何操作
+                this.$message.info('已取消上传');
+              });
+            }
+            else if (checkResponse.data.status === 500) {
+              const error = checkResponse.data.error_msg;
+              this.$confirm(error, '提示', {
+                confirmButtonText: '继续',
+                cancelButtonText: '取消',
+                type: 'error'
+              }).then(() => {
+                this.$message.info('已取消上传');
+              }).catch(() => {
+                // 用户选择取消，不执行任何操作
+                this.$message.info('已取消上传');
+              });
+            }
+            else {
+              // 用户名不存在，直接上传
+              this.uploadScore();
+            }
+          } catch (error) {
+            console.error('检查用户名失败:', error);
+            this.$message.error('检查用户名失败，请重试');
+          }
+        }
+      });
+    },
+
+    async uploadScore() {
+      try {
+        const response = await axiosRequest({
+          method: 'post',
+          url: '/post_colorgame_ranking/',
+          data: {
+            'username': this.uploadForm.username,
+            'score': this.score,
+            'level': this.level
+          }
+        });
+        const data = response.data;
+
+        if (data.status === 200) {
+          localStorage.setItem('username', this.uploadForm.username);
+          this.currentRank = data.data.user_rank;
+          this.isBreakRecord = data.data.is_break_record;
+          this.showUploadDialog = false;
+          this.showRankResult = true;
+          this.getLeaderboard(); // 刷新排行榜
+        }
+      } catch (error) {
+        console.error('上传分数失败:', error);
+        this.$message.error('上传分数失败，请重试');
+      }
+    },
+
+    refreshLeaderboard() {
+      this.getLeaderboard();
+    },
+
+    showUploadScore() {
+      this.showUploadDialog = true;
+    },
+
+    setRowClassName({ row }) {
+      const currentUsername = localStorage.getItem('username');
+      return row.username === currentUsername ? 'current-user-row' : '';
+    },
+
+    getRankClass(rank) {
+      if (rank === 1) return 'rank-first';
+      if (rank === 2) return 'rank-second';
+      if (rank === 3) return 'rank-third';
+      return '';
     }
   },
 };
@@ -324,6 +501,78 @@ export default {
   margin-left: 3%;
 }
 
+.leaderboard {
+  margin: auto;
+  margin-top: 30px;
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  backdrop-filter: blur(5px);
+  width: 70%;
+}
+
+.leaderboard-title {
+  color: white;
+  text-align: center;
+  margin-bottom: 20px;
+  font-size: 24px;
+}
+
+.current-user-row {
+  background-color: rgba(64, 158, 255, 0.1) !important;
+}
+
+.rank-number {
+  font-weight: bold;
+  width: 30px;
+  height: 30px;
+  line-height: 30px;
+  border-radius: 50%;
+  margin: 0 auto;
+}
+
+.rank-first {
+  background-color: #FFD700;
+  color: #000;
+}
+
+.rank-second {
+  background-color: #C0C0C0;
+  color: #000;
+}
+
+.rank-third {
+  background-color: #CD7F32;
+  color: #000;
+}
+
+.refresh-btn {
+  margin-top: 10px;
+  color: white;
+}
+
+.rank-result {
+  text-align: center;
+  font-size: 18px;
+}
+
+.highlight {
+  color: #409EFF;
+  font-size: 24px;
+  font-weight: bold;
+}
+
+.break-record {
+  color: #67C23A;
+  font-size: 20px;
+  margin-top: 10px;
+}
+
+.reward-width,
+.gameover-width {
+  width: 15%;
+}
+
 @keyframes slideIn {
   from {
     transform: translateX(100%);
@@ -336,17 +585,14 @@ export default {
   }
 }
 
-.reward-width,
-.gameover-width {
-  width: 30%;
-}
 
 /* 新增媒体查询 */
 @media (max-width: 550px) {
 
   .reward-width,
   .gameover-width {
-    width: 85%;
+    width: 80%;
+    border-radius: 15px;
   }
 
   .score {
@@ -373,6 +619,19 @@ export default {
 
   .max-level-display {
     font-size: 16px;
+  }
+
+  .leaderboard {
+    padding: 10px;
+    width: 100%;
+  }
+
+  .leaderboard-title {
+    font-size: 20px;
+  }
+
+  .el-table {
+    font-size: 12px;
   }
 }
 </style>
