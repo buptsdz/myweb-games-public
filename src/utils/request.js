@@ -19,6 +19,9 @@ const convertToFormData = (data) => {
         // 如果值是数组或对象，转换为JSON字符串
         if (typeof data[key] === 'object' && data[key] !== null) {
             formData.append(key, JSON.stringify(data[key]));
+        } else if (data[key] === '') {
+            // 如果值是空字符串，添加一个占位符
+            formData.append(key, ' ');
         } else {
             formData.append(key, data[key]);
         }

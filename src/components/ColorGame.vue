@@ -117,6 +117,7 @@ export default {
       showAchievements: false,
       showGameOver: false,
       currentAchievement: '',
+      highestAchievement: '',
       achievements: {
         '初出茅庐': false,
         '火眼初成': false,
@@ -252,6 +253,7 @@ export default {
       Object.entries(this.achievements).forEach(([title, achieved]) => {
         if (achieved && !previousAchievements[title]) {
           this.currentAchievement = title;
+          this.highestAchievement = title;
           // 3秒后清除成就提示
           setTimeout(() => {
             if (this.currentAchievement === title) {
@@ -303,6 +305,7 @@ export default {
       this.level = 1;
       this.gridSize = 2;
       this.currentAchievement = '';
+      this.highestAchievement = '';
       this.showGameOver = false;
       this.generateColors();
     },
@@ -386,7 +389,7 @@ export default {
             'username': this.uploadForm.username,
             'score': this.score,
             'level': this.level,
-            'achievement': this.currentAchievement
+            'achievement': this.highestAchievement
           }
         });
         const data = response.data;
