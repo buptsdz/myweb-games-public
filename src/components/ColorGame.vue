@@ -66,7 +66,7 @@
     <!-- 排名结果对话框 -->
     <el-dialog title="排名结果" :visible.sync="showRankResult" customClass="gameover-width">
       <div class="rank-result">
-        <p>恭喜！您当前排名第 <span class="highlight">{{ currentRank }}</span> 名</p>
+        <p>恭喜！您的最好成绩排名第 <span class="highlight">{{ currentRank }}</span> 名</p>
         <p v-if="isBreakRecord" class="break-record">新纪录！</p>
       </div>
     </el-dialog>
@@ -117,7 +117,6 @@ export default {
       showAchievements: false,
       showGameOver: false,
       currentAchievement: '',
-      highestAchievement: '',
       achievements: {
         '初出茅庐': false,
         '火眼初成': false,
@@ -133,6 +132,35 @@ export default {
         '绝世无双-Ultra': false,
         '绝世无双-Plus': false,
         '绝世无双-Max': false,
+        '绝世无双-Pro-Max': false,
+        '绝世无双-Ultra-Pro-Max': false,
+        '绝世无双-Plus-Ultra-Pro-Max': false,
+        '淬体境': false,
+        '聚气境': false,
+        '蜕凡境': false,
+        '人元境': false,
+        '真阳境': false,
+        '灵武境': false,
+        '天罡境': false,
+        '玄冥境': false,
+        '化宗境': false,
+        '虚空境': false,
+        '洞虚境': false,
+        '阴阳境': false,
+        '四极境': false,
+        '轮回境': false,
+        '大武境': false,
+        '王者境': false,
+        '元尊境': false,
+        '至尊境': false,
+        '主宰境': false,
+        '皇者境': false,
+        '天王境': false,
+        '界王境': false,
+        '破天境': false,
+        '合天境': false,
+        '融天境': false,
+        '原神启动境': false
       },
       maxLevel: 1,
       maxScore: 0,
@@ -181,13 +209,13 @@ export default {
       const baseLightness = 50 + Math.random() * 20;
 
       // 使用非线性公式动态调整差异
-      const hueDiff = Math.max(20 / Math.floor(1 + this.level / 5), 6); // 色相差异逐渐趋近 5
-      const saturationDiff = Math.max(15 / Math.floor(1 + this.level / 7), 6); // 饱和度差异逐渐趋近 5
+      const hueDiff = Math.max(20 / Math.floor(1 + this.level / 5), 5); // 色相差异逐渐趋近 5
+      const saturationDiff = Math.max(15 / Math.floor(1 + this.level / 7), 5); // 饱和度差异逐渐趋近 5
       const lightnessDiff = Math.max(10 / Math.floor(1 + this.level / 9), 3); // 亮度差异逐渐趋近 2
 
       // 增大绿色区域的差异
       let adjustedHueDiff = hueDiff;
-      if (baseHue >= 100 && baseHue <= 140) {
+      if (baseHue >= 120 && baseHue <= 160) {
         adjustedHueDiff += 6; // 绿色区域额外增加差异
       }
 
@@ -224,36 +252,68 @@ export default {
 
       if (this.level === 6) this.gridSize = 3;
       if (this.level === 15) this.gridSize = 4;
-      if (this.level === 23) this.gridSize = 5;
-      if (this.level === 32) this.gridSize = 6;
-      if (this.level === 44) this.gridSize = 7;
+      if (this.level === 24) this.gridSize = 5;
+      if (this.level === 33) this.gridSize = 6;
+      if (this.level === 46) this.gridSize = 7;
 
       this.generateColors();
     },
 
+    levelToAchievement(level) {
+      if (level >= 2) this.achievements['初出茅庐'] = true;
+      if (level >= 6) this.achievements['火眼初成'] = true;
+      if (level >= 10) this.achievements['初试锋芒'] = true;
+      if (level >= 15) this.achievements['成绩斐然'] = true;
+      if (level >= 20) this.achievements['得心应手'] = true;
+      if (level >= 25) this.achievements['游刃有余'] = true;
+      if (level >= 30) this.achievements['炉火纯青'] = true;
+      if (level >= 35) this.achievements['登峰造极'] = true;
+      if (level >= 40) this.achievements['出神入化'] = true;
+      if (level >= 50) this.achievements['绝世无双'] = true;
+      if (level >= 60) this.achievements['绝世无双-Pro'] = true;
+      if (level >= 70) this.achievements['绝世无双-Ultra'] = true;
+      if (level >= 80) this.achievements['绝世无双-Plus'] = true;
+      if (level >= 90) this.achievements['绝世无双-Max'] = true;
+      if (level >= 100) this.achievements['绝世无双-Pro-Max'] = true;
+      if (level >= 110) this.achievements['绝世无双-Ultra-Pro-Max'] = true;
+      if (level >= 120) this.achievements['绝世无双-Plus-Ultra-Pro-Max'] = true;
+      if (level >= 120) this.achievements['淬体境'] = true;
+      if (level >= 130) this.achievements['聚气境'] = true;
+      if (level >= 140) this.achievements['蜕凡境'] = true;
+      if (level >= 150) this.achievements['人元境'] = true;
+      if (level >= 160) this.achievements['真阳境'] = true;
+      if (level >= 170) this.achievements['灵武境'] = true;
+      if (level >= 180) this.achievements['天罡境'] = true;
+      if (level >= 190) this.achievements['玄冥境'] = true;
+      if (level >= 200) this.achievements['化宗境'] = true;
+      if (level >= 210) this.achievements['虚空境'] = true;
+      if (level >= 220) this.achievements['洞虚境'] = true;
+      if (level >= 230) this.achievements['阴阳境'] = true;
+      if (level >= 240) this.achievements['四极境'] = true;
+      if (level >= 250) this.achievements['轮回境'] = true;
+      if (level >= 260) this.achievements['大武境'] = true;
+      if (level >= 270) this.achievements['王者境'] = true;
+      if (level >= 280) this.achievements['元尊境'] = true;
+      if (level >= 290) this.achievements['至尊境'] = true;
+      if (level >= 305) this.achievements['主宰境'] = true;
+      if (level >= 320) this.achievements['皇者境'] = true;
+      if (level >= 335) this.achievements['天王境'] = true;
+      if (level >= 350) this.achievements['界王境'] = true;
+      if (level >= 365) this.achievements['破天境'] = true;
+      if (level >= 385) this.achievements['合天境'] = true;
+      if (level >= 410) this.achievements['融天境'] = true;
+      if (level >= 440) this.achievements['原神启动境'] = true;
+    },
+
     checkAchievements() {
       const previousAchievements = { ...this.achievements };
-
-      if (this.level >= 2) this.achievements['初出茅庐'] = true;
-      if (this.level >= 6) this.achievements['火眼初成'] = true;
-      if (this.level >= 10) this.achievements['初试锋芒'] = true;
-      if (this.level >= 15) this.achievements['成绩斐然'] = true;
-      if (this.level >= 20) this.achievements['得心应手'] = true;
-      if (this.level >= 25) this.achievements['游刃有余'] = true;
-      if (this.level >= 30) this.achievements['炉火纯青'] = true;
-      if (this.level >= 35) this.achievements['登峰造极'] = true;
-      if (this.level >= 40) this.achievements['出神入化'] = true;
-      if (this.level >= 50) this.achievements['绝世无双'] = true;
-      if (this.level >= 60) this.achievements['绝世无双-Pro'] = true;
-      if (this.level >= 70) this.achievements['绝世无双-Ultra'] = true;
-      if (this.level >= 80) this.achievements['绝世无双-Plus'] = true;
-      if (this.level >= 100) this.achievements['绝世无双-Max'] = true;
-
+      const level = this.level;
+      this.levelToAchievement(level);
       // 检查新解锁的成就
       Object.entries(this.achievements).forEach(([title, achieved]) => {
         if (achieved && !previousAchievements[title]) {
           this.currentAchievement = title;
-          this.highestAchievement = title;
+          console.log('解锁成就:', title);
           // 3秒后清除成就提示
           setTimeout(() => {
             if (this.currentAchievement === title) {
@@ -282,14 +342,6 @@ export default {
     },
 
     loadGameData() {
-      const savedData = localStorage.getItem('colorGameData');
-      if (savedData) {
-        const { achievements } = JSON.parse(savedData);
-        if (Object.keys(achievements).length >= Object.keys(this.achievements).length) {
-          this.achievements = achievements;
-        }
-      }
-
       const savedMaxLevel = localStorage.getItem('maxLevel');
       if (savedMaxLevel) {
         this.maxLevel = parseInt(savedMaxLevel, 10);
@@ -298,6 +350,8 @@ export default {
       if (savedMaxScore) {
         this.maxScore = parseInt(savedMaxScore, 10);
       }
+      this.levelToAchievement(this.maxLevel);
+      console.log('本地成就信息:', this.achievements);
     },
 
     restartGame() {
@@ -305,7 +359,6 @@ export default {
       this.level = 1;
       this.gridSize = 2;
       this.currentAchievement = '';
-      this.highestAchievement = '';
       this.showGameOver = false;
       this.generateColors();
     },
@@ -389,7 +442,6 @@ export default {
             'username': this.uploadForm.username,
             'score': this.score,
             'level': this.level,
-            'achievement': this.highestAchievement
           }
         });
         const data = response.data;
