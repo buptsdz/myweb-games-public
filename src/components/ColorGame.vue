@@ -513,7 +513,7 @@ export default {
   background: rgba(255, 255, 255, 0.1);
   border-radius: 16px;
   backdrop-filter: blur(5px);
-  width: 70%;
+  width: 65%;
 }
 
 .leaderboard-title {
@@ -627,8 +627,11 @@ export default {
   }
 
   .leaderboard {
-    padding: 10px;
+    /* 上右下左 */
+    margin: auto;
     width: 100%;
+    padding: 6px;
+    margin-left: -6px;
   }
 
   .leaderboard-title {
