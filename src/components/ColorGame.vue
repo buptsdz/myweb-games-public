@@ -81,7 +81,8 @@
     <div class="leaderboard">
       <h2 class="leaderboard-title">排行榜</h2>
       <el-table :data="leaderboardData" style="width: 100%"
-        :header-cell-style="{ background: '#4527A0', color: 'white' }" :row-class-name="setRowClassName">
+        :header-cell-style="{ background: '#4527A0', color: 'white' }" :row-class-name="setRowClassName"
+        :empty-text="leaderboardError ? '获取排行数据失败' : '暂时无人挑战，快来留下你的战绩吧'">
         <el-table-column prop="rank" label="排名" width="80" align="center">
           <template slot-scope="scope">
             <div class="rank-number" :class="getRankClass(scope.row.rank)">
@@ -132,6 +133,7 @@ export default {
       showUploadDialog: false,
       showRankResult: false,
       leaderboardData: [],
+      leaderboardError: false, // 排行榜获取状态
       uploadForm: {
         username: localStorage.getItem('username') || ''
       },
@@ -238,6 +240,7 @@ export default {
         }
       });
     },
+
     saveGameData() {
       const gameData = {
         achievements: this.achievements,
@@ -289,10 +292,12 @@ export default {
         if (data.status === 200) {
           this.leaderboardData = data.data.top_ranks;
           this.totalUsers = data.data.total_users;
+          this.leaderboardError = false; // 请求成功，重置错误状态
           this.$message.success('排行榜已更新');
         }
       } catch (error) {
         console.error('获取排行榜失败:', error);
+        this.leaderboardError = true; // 请求失败，设置错误状态
       }
     },
 
