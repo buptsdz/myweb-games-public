@@ -3,12 +3,12 @@
     <!-- 模式切换按钮 -->
     <div class="mode-selector">
       <button @click="confirmSwitchMode('normal')" :class="{ active: gameMode === 'normal' }">无尽模式</button>
-      <button @click="confirmSwitchMode('timed')" :class="{ active: gameMode === 'timed' }">限时模式</button>
+      <button @click="confirmSwitchMode('timed')" :class="{ active: gameMode === 'timed' }">竞速模式</button>
     </div>
 
     <!-- 计时器 -->
-    <div v-if="gameMode === 'timed'" class="timer">
-      {{ remainingTime.toFixed(2) }} S
+    <div v-if="gameMode === 'timed'" class="timer timer-display">
+      {{ remainingTime.toFixed(2) }}s
     </div>
 
     <!-- 分数和成就显示 -->
@@ -18,8 +18,8 @@
         <el-alert :title="`解锁成就：${currentAchievement}`" type="success" :closable="false" show-icon />
       </div>
     </div>
-    <h1 style="color: white;font-size: 35px;">当前游戏正在进行较大更新，排行榜可能存在bug，请勿上传分数</h1>
-    <h1 style="color: white;font-size: 35px;">竞速模式为测试版</h1>
+    <!-- <h1 style="color: white;font-size: 35px;">当前游戏正在进行较大更新，排行榜可能存在bug，请勿上传分数</h1>
+    <h1 style="color: white;font-size: 35px;">竞速模式为测试版</h1> -->
 
     <!-- 游戏网格 -->
     <div class="game-container" :style="gridStyle">
@@ -36,7 +36,7 @@
     <!-- 成就对话框 -->
     <el-dialog title="游戏成就" :visible.sync="showAchievements" customClass="reward-width">
       <div class="achievements-list">
-        <el-tag v-for="(achieved, title) in achievements" :key="title" :type="achieved ? 'success' : 'info'"
+        <el-tag v-for="(achieved, title) in currentAchievements" :key="title" :type="achieved ? 'success' : 'info'"
           class="achievement-tag">
           {{ title }}
         </el-tag>
@@ -51,8 +51,8 @@
         <p class="final-score">获得了<span style="color: rgb(50,225,50)"> {{ score }} </span>分！</p>
         <div class="achievements-earned">
           <h3>已获得成就：</h3>
-          <el-tag :style="{ display: achieved ? 'inline-block' : 'none' }" v-for="(achieved, title) in achievements"
-            :key="title" type="success" class="achievement-tag">
+          <el-tag :style="{ display: achieved ? 'inline-block' : 'none' }"
+            v-for="(achieved, title) in currentAchievements" :key="title" type="success" class="achievement-tag">
             {{ title }}
           </el-tag>
         </div>
@@ -65,7 +65,7 @@
 
     <!-- 上传分数对话框 -->
     <el-dialog title="上传分数" :visible.sync="showUploadDialog" customClass="gameover-width" :close-on-click-modal="false">
-      <el-form :model="uploadForm" :rules="uploadRules" ref="uploadForm">
+      <el-form :model="uploadForm" :rules="uploadRules" ref="uploadForm" @submit.native.prevent>
         <el-form-item label="留下您的大名，为您获取排名" prop="username">
           <el-input v-model="uploadForm.username" placeholder="请输入昵称"></el-input>
         </el-form-item>
@@ -86,8 +86,14 @@
 
     <!-- 显示最大轮数 -->
     <div class="max-level-display">
-      <p>最大轮数: {{ maxLevel }}</p>
-      <p>最高分: {{ maxScore }}</p>
+      <!-- 显示最大轮数和最高分 -->
+      <div class="max-level-display">
+        <p v-if="gameMode == 'normal'">最大轮数: {{ maxLevel }}</p>
+        <p v-if="gameMode == 'normal'">最高分: {{ maxScore }}</p>
+
+        <p v-if="gameMode == 'timed'">最大轮数（计时模式）: {{ maxLevelTimed }}</p>
+        <p v-if="gameMode == 'timed'">最高分（计时模式）: {{ maxScoreTimed }}</p>
+      </div>
     </div>
 
     <!-- 排行榜 -->
@@ -145,9 +151,14 @@ export default {
       showGameOver: false,
       currentAchievement: '',
       achievements: {
+        '色盲': false,
+        '色弱': false,
+        '肉眼凡胎': false,
+        '一眼丁真': false,
+        '目光犀利': false,
         '初出茅庐': false,
         '火眼初成': false,
-        '初试锋芒': false,
+        '锋芒毕露': false,
         '成绩斐然': false,
         '得心应手': false,
         '游刃有余': false,
@@ -189,8 +200,26 @@ export default {
         '融天境': false,
         '原神启动境': false
       },
+      achievements_timed: {
+        '太慢了': false,
+        '慢': false,
+        '差点意思': false,
+        '还行': false,
+        '有点意思': false,
+        '哎哟不错哦': false,
+        '渐入佳境': false,
+        '眼感火热': false,
+        '电眼逼人': false,
+        '唯快不破': false,
+        '人肉3090': false,
+        '人肉4060': false,
+        '人肉4090': false,
+        '人肉A100': false
+      },
       maxLevel: 1,
       maxScore: 0,
+      maxLevelTimed: 1,
+      maxScoreTimed: 0,
       showUploadDialog: false,
       showRankResult: false,
       leaderboardData: [],
@@ -221,6 +250,10 @@ export default {
     this.initLeaderboard(); // 获取初始排行榜数据
   },
   computed: {
+    // 根据 mode 动态选择成就数据源
+    currentAchievements() {//不同于currentAchievement
+      return this.gameMode == 'timed' ? this.achievements_timed : this.achievements;
+    },
     // 计算总方块数
     totalSquares() {
       return this.gridSize * this.gridSize;
@@ -276,7 +309,7 @@ export default {
         this.timer = null;
       }
       this.$confirm(
-        `当前游戏进度将丢失，确认切换到${this.gameMode === 'normal' ? '限时模式' : '无尽模式'}吗？`,
+        `当前游戏进度将丢失，确认切换到${this.gameMode === 'normal' ? '竞速模式' : '无尽模式'}吗？`,
         '提示',
         {
           confirmButtonText: '继续',
@@ -297,7 +330,10 @@ export default {
       }
       this.gameMode = this.gameMode === 'normal' ? 'timed' : 'normal';
       this.restartGame(); // 切换后清空当前数据
-      this.$message.success(`已切换到${this.gameMode === 'normal' ? '无尽模式' : '限时模式'}`);
+      this.$message({
+        message: `已切换到${this.gameMode === 'normal' ? '无尽模式' : '竞速模式'}`,
+        type: 'success'
+      });
       this.initLeaderboard(); // 切换模式后重新加载排行榜
     },
     // 处理分页页码切换
@@ -361,7 +397,7 @@ export default {
         const randomFactor = Math.random() * 3 * Math.floor(this.level / 5); // 随机浮动值
         this.score += Math.floor(8 * (1 + this.level * 0.1) + randomFactor);
         this.nextLevel();
-        this.checkAchievements();
+        this.checkAchievements(this.gameMode);
       } else {
         // 答错了 - 游戏结束
         this.showGameOver = true;
@@ -385,58 +421,93 @@ export default {
       this.generateColors();
     },
 
-    levelToAchievement(level) {
-      if (level >= 2) this.achievements['初出茅庐'] = true;
-      if (level >= 6) this.achievements['火眼初成'] = true;
-      if (level >= 10) this.achievements['初试锋芒'] = true;
-      if (level >= 15) this.achievements['成绩斐然'] = true;
-      if (level >= 20) this.achievements['得心应手'] = true;
-      if (level >= 25) this.achievements['游刃有余'] = true;
-      if (level >= 30) this.achievements['炉火纯青'] = true;
-      if (level >= 35) this.achievements['登峰造极'] = true;
-      if (level >= 40) this.achievements['出神入化'] = true;
-      if (level >= 50) this.achievements['绝世无双'] = true;
-      if (level >= 60) this.achievements['绝世无双-Pro'] = true;
-      if (level >= 70) this.achievements['绝世无双-Ultra'] = true;
-      if (level >= 80) this.achievements['绝世无双-Plus'] = true;
-      if (level >= 90) this.achievements['绝世无双-Max'] = true;
-      if (level >= 100) this.achievements['绝世无双-Pro-Max'] = true;
-      if (level >= 110) this.achievements['绝世无双-Ultra-Pro-Max'] = true;
-      if (level >= 120) this.achievements['绝世无双-Plus-Ultra-Pro-Max'] = true;
-      if (level >= 120) this.achievements['淬体境'] = true;
-      if (level >= 130) this.achievements['聚气境'] = true;
-      if (level >= 140) this.achievements['蜕凡境'] = true;
-      if (level >= 150) this.achievements['人元境'] = true;
-      if (level >= 160) this.achievements['真阳境'] = true;
-      if (level >= 170) this.achievements['灵武境'] = true;
-      if (level >= 180) this.achievements['天罡境'] = true;
-      if (level >= 190) this.achievements['玄冥境'] = true;
-      if (level >= 200) this.achievements['化宗境'] = true;
-      if (level >= 210) this.achievements['虚空境'] = true;
-      if (level >= 220) this.achievements['洞虚境'] = true;
-      if (level >= 230) this.achievements['阴阳境'] = true;
-      if (level >= 240) this.achievements['四极境'] = true;
-      if (level >= 250) this.achievements['轮回境'] = true;
-      if (level >= 260) this.achievements['大武境'] = true;
-      if (level >= 270) this.achievements['王者境'] = true;
-      if (level >= 280) this.achievements['元尊境'] = true;
-      if (level >= 290) this.achievements['至尊境'] = true;
-      if (level >= 305) this.achievements['主宰境'] = true;
-      if (level >= 320) this.achievements['皇者境'] = true;
-      if (level >= 335) this.achievements['天王境'] = true;
-      if (level >= 350) this.achievements['界王境'] = true;
-      if (level >= 365) this.achievements['破天境'] = true;
-      if (level >= 385) this.achievements['合天境'] = true;
-      if (level >= 410) this.achievements['融天境'] = true;
-      if (level >= 440) this.achievements['原神启动境'] = true;
+    levelToAchievement(level, mode) {
+      if (mode === 'timed') {
+        if (level >= 2) this.achievements_timed['太慢了'] = true;
+        if (level >= 6) this.achievements_timed['慢'] = true;
+        if (level >= 10) this.achievements_timed['差点意思'] = true;
+        if (level >= 14) this.achievements_timed['还行'] = true;
+        if (level >= 19) this.achievements_timed['有点意思'] = true;
+        if (level >= 24) this.achievements_timed['哎哟不错哦'] = true;
+        if (level >= 29) this.achievements_timed['渐入佳境'] = true;
+        if (level >= 34) this.achievements_timed['眼感火热'] = true;
+        if (level >= 39) this.achievements_timed['电眼逼人'] = true;
+        if (level >= 45) this.achievements_timed['唯快不破'] = true;
+        if (level >= 50) this.achievements_timed['3090'] = true;
+        if (level >= 55) this.achievements_timed['4060'] = true;
+        if (level >= 60) this.achievements_timed['4090'] = true;
+        if (level >= 65) this.achievements_timed['A100'] = true;
+      }
+      else {//normal或mode为空的情况
+        if (level >= 2) this.achievements['色盲'] = true;
+        if (level >= 3) this.achievements['色弱'] = true;
+        if (level >= 5) this.achievements['肉眼凡胎'] = true;
+        if (level >= 8) this.achievements['一眼丁真'] = true;
+        if (level >= 10) this.achievements['目光犀利'] = true;
+        if (level >= 12) this.achievements['初出茅庐'] = true;
+        if (level >= 14) this.achievements['火眼初成'] = true;
+        if (level >= 17) this.achievements['锋芒毕露'] = true;
+        if (level >= 21) this.achievements['成绩斐然'] = true;
+        if (level >= 25) this.achievements['得心应手'] = true;
+        if (level >= 30) this.achievements['游刃有余'] = true;
+        if (level >= 35) this.achievements['炉火纯青'] = true;
+        if (level >= 40) this.achievements['登峰造极'] = true;
+        if (level >= 47) this.achievements['出神入化'] = true;
+        if (level >= 52) this.achievements['绝世无双'] = true;
+        if (level >= 60) this.achievements['绝世无双-Pro'] = true;
+        if (level >= 70) this.achievements['绝世无双-Ultra'] = true;
+        if (level >= 80) this.achievements['绝世无双-Plus'] = true;
+        if (level >= 90) this.achievements['绝世无双-Max'] = true;
+        if (level >= 100) this.achievements['绝世无双-Pro-Max'] = true;
+        if (level >= 110) this.achievements['绝世无双-Ultra-Pro-Max'] = true;
+        if (level >= 120) this.achievements['绝世无双-Plus-Ultra-Pro-Max'] = true;
+        if (level >= 120) this.achievements['淬体境'] = true;
+        if (level >= 130) this.achievements['聚气境'] = true;
+        if (level >= 140) this.achievements['蜕凡境'] = true;
+        if (level >= 150) this.achievements['人元境'] = true;
+        if (level >= 160) this.achievements['真阳境'] = true;
+        if (level >= 170) this.achievements['灵武境'] = true;
+        if (level >= 180) this.achievements['天罡境'] = true;
+        if (level >= 190) this.achievements['玄冥境'] = true;
+        if (level >= 200) this.achievements['化宗境'] = true;
+        if (level >= 210) this.achievements['虚空境'] = true;
+        if (level >= 220) this.achievements['洞虚境'] = true;
+        if (level >= 230) this.achievements['阴阳境'] = true;
+        if (level >= 240) this.achievements['四极境'] = true;
+        if (level >= 250) this.achievements['轮回境'] = true;
+        if (level >= 260) this.achievements['大武境'] = true;
+        if (level >= 270) this.achievements['王者境'] = true;
+        if (level >= 280) this.achievements['元尊境'] = true;
+        if (level >= 290) this.achievements['至尊境'] = true;
+        if (level >= 305) this.achievements['主宰境'] = true;
+        if (level >= 320) this.achievements['皇者境'] = true;
+        if (level >= 335) this.achievements['天王境'] = true;
+        if (level >= 350) this.achievements['界王境'] = true;
+        if (level >= 365) this.achievements['破天境'] = true;
+        if (level >= 385) this.achievements['合天境'] = true;
+        if (level >= 410) this.achievements['融天境'] = true;
+        if (level >= 440) this.achievements['原神启动境'] = true;
+      }
     },
 
-    checkAchievements() {
-      const previousAchievements = { ...this.achievements };
+    checkAchievements(mode) {
+      var previousAchievements = {}
+      if (mode === 'timed') {
+        previousAchievements = { ...this.achievements_timed };
+      } else {
+        previousAchievements = { ...this.achievements };
+      }
       const level = this.level;
-      this.levelToAchievement(level);
-      // 检查新解锁的成就
-      Object.entries(this.achievements).forEach(([title, achieved]) => {
+      this.levelToAchievement(level, mode);
+      if (mode === 'timed') {
+        this.showachieve(this.achievements_timed, previousAchievements);
+      } else {
+        this.showachieve(this.achievements, previousAchievements);
+      }
+    },
+    // 检查新解锁的成就
+    showachieve(achievement, previousAchievements) {
+      Object.entries(achievement).forEach(([title, achieved]) => {
         if (achieved && !previousAchievements[title]) {
           this.currentAchievement = title;
           console.log('解锁成就:', title);
@@ -451,23 +522,38 @@ export default {
     },
 
     saveGameData() {
-      const gameData = {
-        achievements: this.achievements,
-      };
-      localStorage.setItem('colorGameData', JSON.stringify(gameData));
-
-      // 更新最大轮数
-      if (this.level > this.maxLevel) {
-        this.maxLevel = this.level;
-        localStorage.setItem('maxLevel', this.maxLevel);
+      //本地存储轮数和分数
+      if (this.gameMode === 'timed') {
+        if (this.level > this.maxLevelTimed) {
+          this.maxLevelTimed = this.level;
+          localStorage.setItem('maxLevelTimed', this.maxLevelTimed);
+        }
+        if (this.score > this.maxScoreTimed) {
+          this.maxScoreTimed = this.score;
+          localStorage.setItem('maxScoreTimed', this.maxScoreTimed);
+        }
       }
-      if (this.score > this.maxScore) {
-        this.maxScore = this.score;
-        localStorage.setItem('maxScore', this.maxScore);
+      if (this.gameMode === 'normal') {
+        if (this.level > this.maxLevel) {
+          this.maxLevel = this.level;
+          localStorage.setItem('maxLevel', this.maxLevel);
+        }
+        if (this.score > this.maxScore) {
+          this.maxScore = this.score;
+          localStorage.setItem('maxScore', this.maxScore);
+        }
       }
     },
 
     loadGameData() {
+      const savedMaxLevelTimed = localStorage.getItem('maxLevelTimed');
+      if (savedMaxLevelTimed) {
+        this.maxLevelTimed = parseInt(savedMaxLevelTimed, 10);
+      }
+      const savedMaxScoreTimed = localStorage.getItem('maxScoreTimed');
+      if (savedMaxScoreTimed) {
+        this.maxScoreTimed = parseInt(savedMaxScoreTimed, 10);
+      }
       const savedMaxLevel = localStorage.getItem('maxLevel');
       if (savedMaxLevel) {
         this.maxLevel = parseInt(savedMaxLevel, 10);
@@ -476,7 +562,8 @@ export default {
       if (savedMaxScore) {
         this.maxScore = parseInt(savedMaxScore, 10);
       }
-      this.levelToAchievement(this.maxLevel);
+      this.levelToAchievement(this.maxLevel, "normal");
+      this.levelToAchievement(this.maxLevelTimed, "timed");
       console.log('本地成就信息:', this.achievements);
     },
 
@@ -826,10 +913,17 @@ export default {
 .timer {
   position: absolute;
   top: 100px;
-  right: 20px;
+  right: 3%;
   font-size: 35px;
   color: white;
+}
+
+.timer-display {
+  font-family: monospace;
   font-weight: bold;
+  min-width: 70px;
+  display: inline-block;
+  text-align: center;
 }
 
 @keyframes slideIn {
@@ -846,6 +940,14 @@ export default {
 
 /* 新增媒体查询 */
 @media (max-width: 550px) {
+  .timer {
+    position: absolute;
+    top: 100px;
+    right: 6%;
+    font-size: 25px;
+    color: white;
+  }
+
   .score {
     font-size: 18px;
   }
