@@ -79,18 +79,21 @@
 
     <!-- 排行榜 -->
     <div class="leaderboard">
-      <div class="leaderboard-header">
+      <div class="leaderboard-header" style="position: relative;">
         <el-button type="text" class="refresh-btn" @click="refreshLeaderboard"
-          style="position: absolute; left: 0;top: 22px;">
+          style="position: absolute; left: 0; top: 22px;">
           <i class="el-icon-refresh"></i> 刷新排行榜
         </el-button>
         <h2 class="leaderboard-title" style="margin: 0;">排行榜</h2>
       </div>
+
+      <!-- 数据表格 -->
       <el-table :data="leaderboardData" style="width: 100%"
         :header-cell-style="{ background: '#4527A0', color: 'white' }" :row-class-name="setRowClassName"
         :empty-text="leaderboardError ? '获取排行数据失败' : '暂时无人挑战，快来留下你的战绩吧'">
+
         <el-table-column prop="rank" label="排名" width="80" align="center">
-          <template slot-scope="scope">
+          <template #default="scope">
             <div class="rank-number" :class="getRankClass(scope.row.rank)">
               {{ scope.row.rank }}
             </div>
@@ -101,6 +104,12 @@
         <el-table-column prop="max_score" label="分数" width="100"></el-table-column>
         <el-table-column prop="record_broken_at" label="破纪录时间" width="180"></el-table-column>
       </el-table>
+
+      <!-- 分页 -->
+      <div class="pagination-container" style="margin-top: 20px; text-align: center;">
+        <el-pagination :current-page="currentPage" :page-size="pageSize" :total="totalUsers" layout="prev, pager, next"
+          @current-change="handlePageChange" class="custom-pagination" />
+      </div>
     </div>
   </div>
 </template>
@@ -171,6 +180,8 @@ export default {
       showRankResult: false,
       leaderboardData: [],
       leaderboardError: false, // 排行榜获取状态
+      currentPage: 1,      // 当前页数
+      pageSize: 40,        // 每页显示条数
       uploadForm: {
         username: localStorage.getItem('username') || ''
       },
@@ -188,15 +199,16 @@ export default {
   created() {
     this.loadGameData();
     this.generateColors();
-    this.getLeaderboard(); // 获取初始排行榜数据
+    this.initLeaderboard(); // 获取初始排行榜数据
   },
   computed: {
+    // 计算总方块数
     totalSquares() {
       return this.gridSize * this.gridSize;
     },
+    // 计算网格样式
     gridStyle() {
       const containerWidth = 300 + this.gridSize * 0.2 * 100;
-
       return {
         '--grid-size': this.gridSize,
         '--container-width': `${containerWidth}px`,
@@ -206,6 +218,31 @@ export default {
   },
 
   methods: {
+    // 处理分页页码切换
+    async handlePageChange(page) {
+      try {
+        // 显示加载动画
+        this.loading = this.$loading({
+          target: '.custom-pagination',  // 你可以指定哪个元素显示加载动画，通常是整个表格区域
+          text: '正在加载...',
+          background: 'rgba(255, 255, 255, 0.8)' // 背景透明，确保不挡住内容
+        });
+        // 更新当前页
+        this.currentPage = page;
+        // 请求新的分页数据
+        await this.getLeaderboard(page);
+        // 数据加载完毕后关闭加载动画
+        this.loading.close();
+      } catch (error) {
+        console.error('分页加载失败:', error);
+        this.leaderboardError = true;
+        if (this.loading) {
+          this.loading.close(); // 如果发生错误，也关闭加载动画
+        }
+      }
+    },
+
+    // 生成颜色
     generateColors() {
       const baseHue = Math.random() * 360;
       const baseSaturation = 70 + Math.random() * 20;
@@ -366,19 +403,36 @@ export default {
       this.generateColors();
     },
 
-    //获得排行榜数据  
-    async getLeaderboard() {
+    async initLeaderboard() {
+      this.currentPage = 1; // 重置当前页数
       try {
-        const response = await axiosRequest.get('/get_colorgame_ranking/');
+        // 直接加载第一页数据
+        await this.getLeaderboard(this.currentPage); // 加载第一页数据
+        this.$message.success('排行榜已更新');
+      } catch (error) {
+        console.error('初始化排行榜失败:', error);
+        this.leaderboardError = true;
+      }
+    },
+
+    // 获取指定页的排行榜数据
+    async getLeaderboard(page) {
+      try {
+        const response = await axiosRequest.get('/get_colorgame_ranking/', {
+          params: {
+            page: page,
+            page_size: this.pageSize,
+          },
+        });
         const data = response.data;
         if (data.status === 200) {
-          this.leaderboardData = data.data.top_ranks;
+          // 赋值总用户数
           this.totalUsers = data.data.total_users;
-          this.leaderboardError = false; // 请求成功，重置错误状态
-          this.$message.success('排行榜已更新');
+          this.leaderboardData = data.data.ranks; // 当前页数据
+          this.leaderboardError = false;         // 请求成功，重置错误状态
         }
       } catch (error) {
-        console.error('获取排行榜失败:', error);
+        console.error(`获取第 ${page} 页数据失败:`, error);
         this.leaderboardError = true; // 请求失败，设置错误状态
       }
     },
@@ -442,20 +496,23 @@ export default {
           method: 'post',
           url: '/post_colorgame_ranking/',
           data: {
-            'username': this.uploadForm.username,
-            'score': this.score,
-            'level': this.level,
-          }
+            username: this.uploadForm.username,
+            score: this.score,
+            level: this.level,
+          },
         });
         const data = response.data;
 
         if (data.status === 200) {
-          localStorage.setItem('username', this.uploadForm.username);
-          this.currentRank = data.data.user_rank;
-          this.isBreakRecord = data.data.is_break_record;
+          localStorage.setItem('username', this.uploadForm.username); // 保存用户名
+          this.currentRank = data.data.user_rank;                     // 更新当前用户排名
+          this.isBreakRecord = data.data.is_break_record;             // 是否破纪录
+          this.totalUsers = data.data.total_users;                    // 更新总用户数
           this.showUploadDialog = false;
           this.showRankResult = true;
-          this.getLeaderboard(); // 刷新排行榜
+
+          // 刷新当前页排行榜
+          this.initLeaderboard();
         }
       } catch (error) {
         console.error('上传分数失败:', error);
@@ -464,7 +521,7 @@ export default {
     },
 
     refreshLeaderboard() {
-      this.getLeaderboard();
+      this.initLeaderboard();
     },
 
     showUploadScore() {
@@ -486,7 +543,7 @@ export default {
 };
 </script>
 
-<style>
+<style scoped>
 .color-game {
   max-width: 100%;
   margin: 0 auto;
@@ -663,11 +720,6 @@ export default {
   margin-top: 10px;
 }
 
-.reward-width,
-.gameover-width {
-  width: 35%;
-}
-
 @keyframes slideIn {
   from {
     transform: translateX(100%);
@@ -680,16 +732,8 @@ export default {
   }
 }
 
-
 /* 新增媒体查询 */
 @media (max-width: 550px) {
-
-  .reward-width,
-  .gameover-width {
-    width: 80%;
-    border-radius: 15px;
-  }
-
   .score {
     font-size: 18px;
   }
@@ -730,6 +774,90 @@ export default {
 
   .el-table {
     font-size: 12px;
+  }
+}
+</style>
+
+<style>
+.reward-width,
+.gameover-width {
+  width: 35%;
+}
+
+/* 分页器容器 */
+.custom-pagination {
+  display: inline-block;
+  font-size: 14px;
+  color: #4527A0;
+}
+
+.el-pagination button {
+  height: 36px !important;
+  line-height: 36px !important;
+  border-radius: 6px;
+}
+
+/* 页码按钮 */
+.custom-pagination .el-pager li {
+  font-size: 16px;
+  font-weight: bold;
+  color: #4527A0;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  line-height: 36px;
+  text-align: center;
+  margin: 0 5px;
+  transition: background-color 0.3s, color 0.3s;
+}
+
+/* 当前页码按钮 */
+.custom-pagination .el-pager li.active {
+  background-color: #4527A0;
+  color: white;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* 悬停效果 */
+.custom-pagination .el-pager li:hover {
+  background-color: #6A52C4;
+  color: white;
+}
+
+/* 上一页、下一页按钮 */
+.custom-pagination .el-pagination__prev,
+.custom-pagination .el-pagination__next {
+  font-size: 16px;
+  color: #4527A0;
+  transition: color 0.3s;
+  border-radius: 15px;
+}
+
+.custom-pagination .el-pagination__prev:hover,
+.custom-pagination .el-pagination__next:hover {
+  color: #6A52C4;
+}
+
+/* 禁用状态按钮 */
+.custom-pagination .el-pagination__prev.is-disabled,
+.custom-pagination .el-pagination__next.is-disabled {
+  color: #B0B0B0;
+}
+
+/* 简化页码符号（...） */
+.custom-pagination .el-pager li.more {
+  font-size: 18px;
+  font-weight: bold;
+  color: #B0B0B0;
+  cursor: default;
+}
+
+@media (max-width: 550px) {
+
+  .reward-width,
+  .gameover-width {
+    width: 80%;
+    border-radius: 15px;
   }
 }
 </style>
