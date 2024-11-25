@@ -49,18 +49,18 @@
       <div class="game-over-content">
         <p class="final-score">你到达了第<span style="color: rgb(232, 101, 39)"> {{ level }} </span>关 </p>
         <p class="final-score">获得了<span style="color: rgb(50,225,50)"> {{ score }} </span>分！</p>
-        <div class="achievements-earned">
-          <h3>已获得成就：</h3>
-          <el-tag :style="{ display: achieved ? 'inline-block' : 'none' }"
-            v-for="(achieved, title) in currentAchievements" :key="title" type="success" class="achievement-tag">
-            {{ title }}
-          </el-tag>
-        </div>
+        <span style="text-align: right; display: block;">
+          <el-button type="primary" @click="showUploadScore">上传分数</el-button>
+          <el-button @click="restartGame">重新开始</el-button>
+        </span>
       </div>
-      <span slot="footer" class="dialog-footer">
-        <el-button type="primary" @click="showUploadScore">上传分数</el-button>
-        <el-button @click="restartGame">重新开始</el-button>
-      </span>
+      <div class="achievements-earned">
+        <h3>已获得成就：</h3>
+        <el-tag :style="{ display: achieved ? 'inline-block' : 'none' }"
+          v-for="(achieved, title) in currentAchievements" :key="title" type="success" class="achievement-tag">
+          {{ title }}
+        </el-tag>
+      </div>
     </el-dialog>
 
     <!-- 上传分数对话框 -->
@@ -225,7 +225,7 @@ export default {
       leaderboardData: [],
       leaderboardError: false, // 排行榜获取状态
       currentPage: 1,      // 当前页数
-      pageSize: 40,        // 每页显示条数
+      pageSize: 20,        // 每页显示条数
       uploadForm: {
         username: localStorage.getItem('username') || ''
       },
@@ -363,28 +363,23 @@ export default {
     // 生成颜色
     generateColors() {
       const baseHue = Math.random() * 360;
-      const baseSaturation = 70 + Math.random() * 20;
-      const baseLightness = 50 + Math.random() * 20;
+      // 随机决定是加还是减
+      const baseSaturation = 50 + (Math.random() > 0.5 ? Math.random() * 30 : -Math.random() * 20);
+      const baseLightness = 70 + (Math.random() > 0.5 ? Math.random() * 20 : -Math.random() * 20);
 
       // 使用非线性公式动态调整差异
-      const hueDiff = Math.max(20 / Math.floor(1 + this.level / 5), 5); // 色相差异逐渐趋近 5
-      const saturationDiff = Math.max(15 / Math.floor(1 + this.level / 7), 5); // 饱和度差异逐渐趋近 5
-      const lightnessDiff = Math.max(10 / Math.floor(1 + this.level / 9), 3); // 亮度差异逐渐趋近 2
-
-      // 增大绿色区域的差异
-      let adjustedHueDiff = hueDiff;
-      if (baseHue >= 120 && baseHue <= 160) {
-        adjustedHueDiff += 6; // 绿色区域额外增加差异
-      }
+      const HueDiff = Math.max(20 / Math.floor(1 + this.level / 5), 5); // 色相差异逐渐趋近 5
+      const SaturationDiff = Math.max(15 / Math.floor(1 + this.level / 7), 5); // 饱和度差异逐渐趋近 5
+      const LightnessDiff = Math.max(10 / Math.floor(1 + this.level / 9), 2); // 亮度差异逐渐趋近 2
 
       this.colors = Array(this.totalSquares).fill(0).map(() => {
         return `hsl(${baseHue}, ${baseSaturation}%, ${baseLightness}%)`;
       });
 
       this.targetIndex = Math.floor(Math.random() * this.totalSquares);
-      const targetHue = (baseHue + adjustedHueDiff) % 360;
-      const targetSaturation = Math.max(baseSaturation - saturationDiff, 50);
-      const targetLightness = Math.min(baseLightness + lightnessDiff, 100);
+      const targetHue = (baseHue + HueDiff) % 360;
+      const targetSaturation = baseSaturation + (Math.random() > 0.5 ? SaturationDiff : -SaturationDiff);
+      const targetLightness = baseLightness + (Math.random() > 0.5 ? LightnessDiff : -LightnessDiff);
 
       this.colors[this.targetIndex] = `hsl(${targetHue}, ${targetSaturation}%, ${targetLightness}%)`;
     },
