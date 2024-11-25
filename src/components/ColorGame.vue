@@ -1,5 +1,16 @@
 <template>
   <div class="color-game">
+    <!-- 模式切换按钮 -->
+    <div class="mode-selector">
+      <button @click="confirmSwitchMode('normal')" :class="{ active: gameMode === 'normal' }">无尽模式</button>
+      <button @click="confirmSwitchMode('timed')" :class="{ active: gameMode === 'timed' }">限时模式</button>
+    </div>
+
+    <!-- 计时器 -->
+    <div v-if="gameMode === 'timed'" class="timer">
+      {{ remainingTime.toFixed(2) }} S
+    </div>
+
     <!-- 分数和成就显示 -->
     <div class="game-header">
       <div class="score">分数: {{ score }}</div>
@@ -8,6 +19,7 @@
       </div>
     </div>
     <h1 style="color: white;font-size: 35px;">当前游戏正在进行较大更新，排行榜可能存在bug，请勿上传分数</h1>
+    <h1 style="color: white;font-size: 35px;">竞速模式为测试版</h1>
 
     <!-- 游戏网格 -->
     <div class="game-container" :style="gridStyle">
@@ -85,7 +97,9 @@
           style="position: absolute; left: 0; top: 22px;">
           <i class="el-icon-refresh"></i> 刷新排行榜
         </el-button>
-        <h2 class="leaderboard-title" style="margin: 0;">排行榜</h2>
+        <h2 class="leaderboard-title" style="margin: 0;">
+          排行榜（{{ gameMode === 'normal' ? '无尽' : '竞速' }}）
+        </h2>
       </div>
 
       <!-- 数据表格 -->
@@ -195,6 +209,10 @@ export default {
       currentRank: 0,
       isBreakRecord: false,
       totalUsers: 0,
+      gameMode: 'normal', // 当前模式，默认无尽模式
+      remainingTime: 60.00,  // 限时模式下的剩余时间
+      timer: null,        // 定时器句柄
+      timed_playing: false, // 是否正在限时模式下游戏
     };
   },
   created() {
@@ -217,8 +235,71 @@ export default {
       };
     },
   },
-
+  watch: {
+    // 监听 timedPlaying 的变化
+    score(newVal) {
+      if (newVal && this.score > 0 && !this.timed_playing) {
+        this.timed_playing = true;
+        this.startTimer();
+      }
+    },
+  },
   methods: {
+    startTimer() {
+      const startTime = performance.now();
+      const initialTime = this.remainingTime;
+
+      this.timer = setInterval(() => {
+        const elapsed = (performance.now() - startTime) / 1000;
+        this.remainingTime = parseFloat((initialTime - elapsed).toFixed(2));
+
+        if (this.remainingTime <= 0) {
+          this.remainingTime = 0;
+          this.showGameOver = true;
+          clearInterval(this.timer);
+          this.timer = null;
+        }
+      }, 10);
+    },
+    // 提示用户确认切换
+    confirmSwitchMode(newMode) {
+      // 如果点击的是当前模式，直接返回不执行任何操作
+      if (newMode === this.gameMode) {
+        return;
+      }
+      // 暂停计时
+      if (this.score === 0) {
+        this.switchMode();
+        return;
+      } else if (this.timer) {
+        clearInterval(this.timer);
+        this.timer = null;
+      }
+      this.$confirm(
+        `当前游戏进度将丢失，确认切换到${this.gameMode === 'normal' ? '限时模式' : '无尽模式'}吗？`,
+        '提示',
+        {
+          confirmButtonText: '继续',
+          cancelButtonText: '取消',
+          type: 'warning'
+        }
+      ).then(() => {
+        // 用户选择继续，执行切换操作
+        this.switchMode();
+      }).catch(() => {
+        // 用户选择取消，继续计时
+        this.startTimer();
+      });
+    },
+    switchMode() {
+      if (this.gameMode === 'timed') {
+        this.timed_playing = false;
+      }
+      this.gameMode = this.gameMode === 'normal' ? 'timed' : 'normal';
+      this.restartGame(); // 切换后清空当前数据
+      this.$message.success(`已切换到${this.gameMode === 'normal' ? '无尽模式' : '限时模式'}`);
+      this.initLeaderboard(); // 切换模式后重新加载排行榜
+    },
     // 处理分页页码切换
     async handlePageChange(page) {
       try {
@@ -285,6 +366,10 @@ export default {
         // 答错了 - 游戏结束
         this.showGameOver = true;
         this.saveGameData();
+        if (this.timer) {
+          clearInterval(this.timer);
+          this.timer = null;
+        }
       }
     },
 
@@ -402,6 +487,10 @@ export default {
       this.currentAchievement = '';
       this.showGameOver = false;
       this.generateColors();
+      clearInterval(this.timer);
+      this.timer = null;
+      this.remainingTime = 60; // 重置倒计时
+      this.timed_playing = false;
     },
 
     async initLeaderboard() {
@@ -418,11 +507,10 @@ export default {
     // 获取指定页的排行榜数据
     async getLeaderboard(page) {
       try {
-        const response = await axiosRequest.get('/get_colorgame_ranking/', {
-          params: {
-            page: page,
-            page_size: this.pageSize,
-          },
+        const response = await axiosRequest.post('/get_colorgame_ranking/', {
+          page: page,
+          page_size: this.pageSize,
+          mode: this.gameMode
         });
         const data = response.data;
         if (data.status === 200) {
@@ -486,7 +574,7 @@ export default {
             }
           } catch (error) {
             console.error('检查用户名失败:', error);
-            this.$message.error('检查用户名失败，请重试');
+            this.$message.error('获取用户数据失败，请检查网络');
           }
         }
       });
@@ -496,11 +584,12 @@ export default {
       try {
         const response = await axiosRequest({
           method: 'post',
-          url: '/post_colorgame_ranking/',
+          url: '/upload_colorgame_scores/',
           data: {
             username: this.uploadForm.username,
             score: this.score,
             level: this.level,
+            mode: this.gameMode
           },
         });
         const data = response.data;
@@ -540,7 +629,10 @@ export default {
       if (rank === 2) return 'rank-second';
       if (rank === 3) return 'rank-third';
       return '';
-    }
+    },
+    beforeDestroy() {
+      clearInterval(this.timer); // 防止内存泄漏
+    },
   },
 };
 </script>
@@ -720,6 +812,24 @@ export default {
   color: #67C23A;
   font-size: 20px;
   margin-top: 10px;
+}
+
+.mode-selector button {
+  margin: 5px;
+}
+
+.mode-selector .active {
+  font-weight: bold;
+  color: blue;
+}
+
+.timer {
+  position: absolute;
+  top: 100px;
+  right: 20px;
+  font-size: 35px;
+  color: white;
+  font-weight: bold;
 }
 
 @keyframes slideIn {
