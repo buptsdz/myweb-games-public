@@ -271,7 +271,7 @@ export default {
   watch: {
     // 监听 timedPlaying 的变化
     score(newVal) {
-      if (newVal && this.score > 0 && !this.timed_playing) {
+      if (newVal && this.score > 0 && !this.timed_playing && this.gameMode == 'timed') {
         this.timed_playing = true;
         this.startTimer();
       }
