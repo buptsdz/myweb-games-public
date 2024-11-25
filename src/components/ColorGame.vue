@@ -7,6 +7,7 @@
         <el-alert :title="`解锁成就：${currentAchievement}`" type="success" :closable="false" show-icon />
       </div>
     </div>
+    <h1 style="color: white;font-size: 35px;">当前游戏正在进行较大更新，排行榜可能存在bug，请勿上传分数</h1>
 
     <!-- 游戏网格 -->
     <div class="game-container" :style="gridStyle">
