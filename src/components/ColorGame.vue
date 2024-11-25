@@ -409,7 +409,6 @@ export default {
       try {
         // 直接加载第一页数据
         await this.getLeaderboard(this.currentPage); // 加载第一页数据
-        this.$message.success('排行榜已更新');
       } catch (error) {
         console.error('初始化排行榜失败:', error);
         this.leaderboardError = true;
@@ -427,12 +426,14 @@ export default {
         });
         const data = response.data;
         if (data.status === 200) {
+          this.$message.success('排行榜已更新');
           // 赋值总用户数
           this.totalUsers = data.data.total_users;
           this.leaderboardData = data.data.ranks; // 当前页数据
           this.leaderboardError = false;         // 请求成功，重置错误状态
         }
       } catch (error) {
+        this.$message.error('获取排行榜数据失败');
         console.error(`获取第 ${page} 页数据失败:`, error);
         this.leaderboardError = true; // 请求失败，设置错误状态
       }
