@@ -79,7 +79,13 @@
 
     <!-- 排行榜 -->
     <div class="leaderboard">
-      <h2 class="leaderboard-title">排行榜</h2>
+      <div class="leaderboard-header">
+        <el-button type="text" class="refresh-btn" @click="refreshLeaderboard"
+          style="position: absolute; left: 0;top: 22px;">
+          <i class="el-icon-refresh"></i> 刷新排行榜
+        </el-button>
+        <h2 class="leaderboard-title" style="margin: 0;">排行榜</h2>
+      </div>
       <el-table :data="leaderboardData" style="width: 100%"
         :header-cell-style="{ background: '#4527A0', color: 'white' }" :row-class-name="setRowClassName"
         :empty-text="leaderboardError ? '获取排行数据失败' : '暂时无人挑战，快来留下你的战绩吧'">
@@ -95,9 +101,6 @@
         <el-table-column prop="max_score" label="分数" width="100"></el-table-column>
         <el-table-column prop="record_broken_at" label="破纪录时间" width="180"></el-table-column>
       </el-table>
-      <el-button type="text" class="refresh-btn" @click="refreshLeaderboard">
-        <i class="el-icon-refresh"></i> 刷新排行榜
-      </el-button>
     </div>
   </div>
 </template>
@@ -595,6 +598,15 @@ export default {
   width: 65%;
 }
 
+.leaderboard-header {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  margin-bottom: 30px;
+  margin-top: 15px;
+}
+
 .leaderboard-title {
   color: white;
   text-align: center;
@@ -631,7 +643,6 @@ export default {
 }
 
 .refresh-btn {
-  margin-top: 10px;
   color: white;
 }
 
