@@ -1095,6 +1095,7 @@ export default {
     min-width: 30px;
     height: 30px;
     line-height: 30px;
+    margin: 0 2px;
   }
 
   .el-pagination button {
