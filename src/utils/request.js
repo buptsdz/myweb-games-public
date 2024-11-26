@@ -3,7 +3,7 @@ import axios from 'axios';
 const online_url = 'http://test.sparkflare.cn/sdz_web';
 const test_url = '/api';//配合vue.config.js中代理,防止跨域
 
-const baseURL = process.env.NODE_ENV === 'production' ? online_url : test_url;
+const baseURL = process.env.NODE_ENV === 'production' ? online_url : online_url;
 
 // 创建axios实例
 const axiosRequest = axios.create({

@@ -284,7 +284,19 @@ export default {
         this.timed_playing = true;
         this.startTimer();
       }
+      if (newVal > this.level * 1000) {
+        //刷新网页
+        location.reload();
+        console.log('刷新网页');
+      }
     },
+    level(newVal) {
+      if (newVal > this.score + 2) {
+        //刷新网页
+        location.reload();
+        console.log('刷新网页');
+      }
+    }
   },
   methods: {
     // 更新分页页码数量
@@ -651,7 +663,8 @@ export default {
               this.$confirm('用户名已存在，是否继续使用该用户名上传分数？', '提示', {
                 confirmButtonText: '继续',
                 cancelButtonText: '取消',
-                type: 'warning'
+                type: 'warning',
+                closeOnClickModal: false
               }).then(() => {
                 // 用户选择继续，执行上传操作
                 this.uploadScore();
@@ -665,7 +678,8 @@ export default {
               this.$confirm(error, '提示', {
                 confirmButtonText: '继续',
                 cancelButtonText: '取消',
-                type: 'error'
+                type: 'error',
+                closeOnClickModal: false
               }).then(() => {
                 this.$message.info('已取消上传');
               }).catch(() => {
@@ -674,8 +688,19 @@ export default {
               });
             }
             else {
-              // 用户名不存在，直接上传
-              this.uploadScore();
+              // 新建用户名，提示用户确定使用这个创建吗
+              this.$confirm(`确定使用${this.uploadForm.username}作为用户名上传分数吗？`, '提示', {
+                confirmButtonText: '继续',
+                cancelButtonText: '取消',
+                type: 'warning',
+                closeOnClickModal: false
+              }).then(() => {
+                // 用户选择继续，执行上传操作
+                this.uploadScore();
+              }).catch(() => {
+                // 用户选择取消，不执行任何操作
+                this.$message.info('已取消上传');
+              });
             }
           } catch (error) {
             console.error('检查用户名失败:', error);
