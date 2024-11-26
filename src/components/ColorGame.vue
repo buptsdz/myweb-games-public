@@ -127,9 +127,9 @@
       </el-table>
 
       <!-- 分页 -->
-      <div class="pagination-container" style="margin-top: 20px; text-align: center;">
+      <div style="margin-top: 20px; text-align: center;">
         <el-pagination :current-page="currentPage" :page-size="pageSize" :total="totalUsers" layout="prev, pager, next"
-          @current-change="handlePageChange" class="custom-pagination" />
+          :pager-count="pagerCount" @current-change="handlePageChange" class="custom-pagination" />
       </div>
     </div>
   </div>
@@ -242,12 +242,21 @@ export default {
       remainingTime: 60.00,  // 限时模式下的剩余时间
       timer: null,        // 定时器句柄
       timed_playing: false, // 是否正在限时模式下游戏
+      pagerCount: 5,  // 初始值，可以根据需要设置一个默认值
     };
   },
   created() {
     this.loadGameData();
     this.generateColors();
     this.initLeaderboard(); // 获取初始排行榜数据
+  },
+  mounted() {
+    this.updatePagerCount(); // 页面加载时根据屏幕宽度设置 pagerCount
+    window.addEventListener('resize', this.updatePagerCount); // 监听窗口大小变化
+  },
+  destroyed() {
+    window.removeEventListener('resize', this.updatePagerCount); // 组件销毁时移除监听
+    clearInterval(this.timer); // 防止内存泄漏
   },
   computed: {
     // 根据 mode 动态选择成就数据源
@@ -278,6 +287,20 @@ export default {
     },
   },
   methods: {
+    // 更新分页页码数量
+    updatePagerCount() {
+      // 获取屏幕宽度
+      const screenWidth = window.innerWidth * 0.8;
+
+      // 假设每个页码按钮的宽度是 40px + 10px 的间隔
+      const pagerWidth = 40; // 每个页码按钮宽度
+      const gapWidth = 10;   // 每个按钮间隔
+      const maxPagerCount = Math.floor(screenWidth / (pagerWidth + gapWidth) - 2); // 最大显示的页码数
+      console.log(`当前屏幕宽度为 ${screenWidth}，可以显示 ${maxPagerCount} 个页码按钮。`);
+      // 设置 pagerCount 的值
+      this.pagerCount = maxPagerCount > 8 ? 8 : maxPagerCount; // 最大页码数限制
+    },
+    // 开始倒计时
     startTimer() {
       const startTime = performance.now();
       const initialTime = this.remainingTime;
@@ -712,9 +735,6 @@ export default {
       if (rank === 3) return 'rank-third';
       return '';
     },
-    beforeDestroy() {
-      clearInterval(this.timer); // 防止内存泄漏
-    },
   },
 };
 </script>
@@ -1013,6 +1033,7 @@ export default {
   color: #4527A0;
   border-radius: 50%;
   width: 36px;
+  min-width: 36px;
   height: 36px;
   line-height: 36px;
   text-align: center;
@@ -1067,6 +1088,19 @@ export default {
   .gameover-width {
     width: 80%;
     border-radius: 15px;
+  }
+
+  .custom-pagination .el-pager li {
+    width: 30px;
+    min-width: 30px;
+    height: 30px;
+    line-height: 30px;
+  }
+
+  .el-pagination button {
+    height: 30px !important;
+    line-height: 30px !important;
+    border-radius: 6px;
   }
 }
 </style>
