@@ -4,6 +4,7 @@
     <div class="mode-selector">
       <button @click="confirmSwitchMode('normal')" :class="{ active: gameMode === 'normal' }">无尽模式</button>
       <button @click="confirmSwitchMode('timed')" :class="{ active: gameMode === 'timed' }">竞速模式</button>
+      <button @click="confirmSwitchMode('open')" :class="{ active: gameMode === 'open' }">刷榜模式（测试版)</button>
     </div>
 
     <!-- 计时器 -->
@@ -35,12 +36,13 @@
 
     <!-- 成就对话框 -->
     <el-dialog title="游戏成就" :visible.sync="showAchievements" customClass="reward-width">
-      <div class="achievements-list">
+      <div class="achievements-list" v-if="gameMode === 'normal' || gameMode === 'timed'">
         <el-tag v-for="(achieved, title) in currentAchievements" :key="title" :type="achieved ? 'success' : 'info'"
           class="achievement-tag">
           {{ title }}
         </el-tag>
       </div>
+      <div v-if="gameMode === 'open'">刷榜模式暂无成就，如果需要请留言</div>
     </el-dialog>
 
     <!-- 修改后的游戏结束对话框 -->
@@ -54,7 +56,7 @@
           <el-button @click="restartGame">重新开始</el-button>
         </span>
       </div>
-      <div class="achievements-earned">
+      <div class="achievements-earned" v-if="gameMode === 'normal' || gameMode === 'timed'">
         <h3>已获得成就：</h3>
         <el-tag :style="{ display: achieved ? 'inline-block' : 'none' }"
           v-for="(achieved, title) in currentAchievements" :key="title" type="success" class="achievement-tag">
@@ -93,6 +95,9 @@
 
         <p v-if="gameMode == 'timed'">最大轮数（计时模式）: {{ maxLevelTimed }}</p>
         <p v-if="gameMode == 'timed'">最高分（计时模式）: {{ maxScoreTimed }}</p>
+
+        <p v-if="gameMode == 'open'">当前为刷榜专用模式，mode参数为"open"</p>
+        <p v-if="gameMode == 'open'">请不要过度刷屏</p>
       </div>
     </div>
 
@@ -104,7 +109,7 @@
           <i class="el-icon-refresh"></i> 刷新排行榜
         </el-button>
         <h2 class="leaderboard-title" style="margin: 0;">
-          排行榜（{{ gameMode === 'normal' ? '无尽' : '竞速' }}）
+          排行榜（{{ modeTitles[gameMode] }}）
         </h2>
       </div>
 
@@ -243,6 +248,11 @@ export default {
       timer: null,        // 定时器句柄
       timed_playing: false, // 是否正在限时模式下游戏
       pagerCount: 5,  // 初始值，可以根据需要设置一个默认值
+      modeTitles: {
+        normal: '无尽',
+        timed: '竞速',
+        open: '刷榜',
+      }
     };
   },
   created() {
@@ -329,22 +339,23 @@ export default {
         }
       }, 10);
     },
-    // 提示用户确认切换
     confirmSwitchMode(newMode) {
-      // 如果点击的是当前模式，直接返回不执行任何操作
+      // console.log('confirmSwitchMode newMode:', newMode);  // 检查这里传入的 newMode
       if (newMode === this.gameMode) {
         return;
       }
-      // 暂停计时
+
+      // 如果游戏正在进行，询问是否切换
       if (this.score === 0) {
-        this.switchMode();
+        this.switchMode(newMode);  // 确保这里传递了 newMode
         return;
       } else if (this.timer) {
         clearInterval(this.timer);
         this.timer = null;
       }
+
       this.$confirm(
-        `当前游戏进度将丢失，确认切换到${this.gameMode === 'normal' ? '竞速模式' : '无尽模式'}吗？`,
+        `当前游戏进度将丢失，确认切换到${this.modeTitles[newMode]}吗？`,
         '提示',
         {
           confirmButtonText: '继续',
@@ -353,23 +364,34 @@ export default {
         }
       ).then(() => {
         // 用户选择继续，执行切换操作
-        this.switchMode();
+        //console.log('用户确认切换，newMode:', newMode);  // 确保 newMode 正确传递
+        this.switchMode(newMode);
       }).catch(() => {
         // 用户选择取消，继续计时
         this.startTimer();
       });
     },
-    switchMode() {
+
+    switchMode(newMode) {
+      // console.log('switchMode newMode:', newMode);  // 确保 switchMode 接收到 newMode
+      // if (newMode === undefined) {
+      //   console.error('newMode is undefined in switchMode!');
+      //   return;
+      // }
+
       if (this.gameMode === 'timed') {
         this.timed_playing = false;
       }
-      this.gameMode = this.gameMode === 'normal' ? 'timed' : 'normal';
-      this.restartGame(); // 切换后清空当前数据
+
+      this.gameMode = newMode;  // 设置新的游戏模式
+      this.restartGame();  // 切换后清空当前数据
+
       this.$message({
-        message: `已切换到${this.gameMode === 'normal' ? '无尽模式' : '竞速模式'}`,
+        message: `已切换到${this.modeTitles[this.gameMode]}模式`,
         type: 'success'
       });
-      this.initLeaderboard(); // 切换模式后重新加载排行榜
+
+      this.initLeaderboard();  // 切换模式后重新加载排行榜
     },
     // 处理分页页码切换
     async handlePageChange(page) {
@@ -468,7 +490,7 @@ export default {
         if (level >= 60) this.achievements_timed['4090'] = true;
         if (level >= 65) this.achievements_timed['A100'] = true;
       }
-      else {//normal或mode为空的情况
+      else if (mode === "normal") {
         if (level >= 2) this.achievements['色盲'] = true;
         if (level >= 3) this.achievements['色弱'] = true;
         if (level >= 5) this.achievements['肉眼凡胎'] = true;
@@ -517,6 +539,9 @@ export default {
         if (level >= 385) this.achievements['合天境'] = true;
         if (level >= 410) this.achievements['融天境'] = true;
         if (level >= 440) this.achievements['原神启动境'] = true;
+      }
+      else if (mode === "open") {
+        return;
       }
     },
 
@@ -655,7 +680,8 @@ export default {
               method: 'post',
               url: '/check_colorgame_username/',
               data: {
-                username: this.uploadForm.username
+                username: this.uploadForm.username,
+                mode: this.gameMode
               }
             });
             if (checkResponse.data.status === 400) {
