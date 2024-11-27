@@ -4,7 +4,7 @@
     <div class="mode-selector">
       <button @click="confirmSwitchMode('normal')" :class="{ active: gameMode === 'normal' }">无尽模式</button>
       <button @click="confirmSwitchMode('timed')" :class="{ active: gameMode === 'timed' }">竞速模式</button>
-      <button @click="confirmSwitchMode('open')" :class="{ active: gameMode === 'open' }">刷榜模式（测试版)</button>
+      <button @click="confirmSwitchMode('open')" :class="{ active: gameMode === 'open' }">刷榜模式(测试版)</button>
     </div>
 
     <!-- 计时器 -->
@@ -271,7 +271,12 @@ export default {
   computed: {
     // 根据 mode 动态选择成就数据源
     currentAchievements() {//不同于currentAchievement
-      return this.gameMode == 'timed' ? this.achievements_timed : this.achievements;
+      if (this.gameMode == 'normal') {
+        return this.achievements;
+      }
+      else if (this.gameMode == 'timed') {
+        return this.achievements_timed;
+      }
     },
     // 计算总方块数
     totalSquares() {
