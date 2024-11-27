@@ -395,7 +395,8 @@ export default {
 
       this.$message({
         message: `已切换到${this.modeTitles[this.gameMode]}模式`,
-        type: 'success'
+        type: 'success',
+        duration: 1500
       });
 
       this.initLeaderboard();  // 切换模式后重新加载排行榜
@@ -578,7 +579,7 @@ export default {
             if (this.currentAchievement === title) {
               this.currentAchievement = '';
             }
-          }, 3300);
+          }, 2200);
         }
       });
     },
@@ -663,7 +664,11 @@ export default {
         });
         const data = response.data;
         if (data.status === 200) {
-          this.$message.success('排行榜已更新');
+          this.$message({
+            message: '排行榜数据已更新',
+            type: 'success',
+            duration: 1500
+          });
           // 赋值总用户数
           this.totalUsers = data.data.total_users;
           this.leaderboardData = data.data.ranks; // 当前页数据
