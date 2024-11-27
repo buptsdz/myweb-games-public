@@ -4,7 +4,7 @@
     <div class="mode-selector">
       <button @click="confirmSwitchMode('normal')" :class="{ active: gameMode === 'normal' }">无尽模式</button>
       <button @click="confirmSwitchMode('timed')" :class="{ active: gameMode === 'timed' }">竞速模式</button>
-      <button @click="confirmSwitchMode('open')" :class="{ active: gameMode === 'open' }">刷榜模式(测试版)</button>
+      <button @click="confirmSwitchMode('open')" :class="{ active: gameMode === 'open' }">外挂模式(测试版)</button>
     </div>
 
     <!-- 计时器 -->
@@ -42,7 +42,7 @@
           {{ title }}
         </el-tag>
       </div>
-      <div v-if="gameMode === 'open'">刷榜模式暂无成就，如果需要请留言</div>
+      <div v-if="gameMode === 'open'">外挂模式暂无成就，如果需要请留言</div>
     </el-dialog>
 
     <!-- 修改后的游戏结束对话框 -->
@@ -96,8 +96,8 @@
         <p v-if="gameMode == 'timed'">最大轮数（计时模式）: {{ maxLevelTimed }}</p>
         <p v-if="gameMode == 'timed'">最高分（计时模式）: {{ maxScoreTimed }}</p>
 
-        <p v-if="gameMode == 'open'">当前为刷榜专用模式，mode参数为"open"</p>
-        <p v-if="gameMode == 'open'">请不要过度刷屏</p>
+        <p v-if="gameMode == 'open'">当前为外挂专用模式，mode参数为"open"</p>
+        <p v-if="gameMode == 'open'">请不要过度刷榜</p>
       </div>
     </div>
 
@@ -251,7 +251,7 @@ export default {
       modeTitles: {
         normal: '无尽',
         timed: '竞速',
-        open: '刷榜',
+        open: '外挂',
       }
     };
   },
@@ -276,6 +276,8 @@ export default {
       }
       else if (this.gameMode == 'timed') {
         return this.achievements_timed;
+      } else {
+        return {};
       }
     },
     // 计算总方块数
@@ -816,9 +818,26 @@ export default {
 }
 
 .score {
+  margin-top: 10px;
   font-size: 24px;
   font-weight: bold;
   color: white;
+}
+
+.timer {
+  position: absolute;
+  top: 120px;
+  right: 10%;
+  font-size: 35px;
+  color: white;
+}
+
+.timer-display {
+  font-family: monospace;
+  font-weight: bold;
+  min-width: 70px;
+  display: inline-block;
+  text-align: center;
 }
 
 .game-container {
@@ -833,6 +852,7 @@ export default {
   border-radius: 16px;
   box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
   backdrop-filter: blur(5px);
+  margin-top: 30px;
 }
 
 .color-block {
@@ -981,22 +1001,6 @@ export default {
   color: blue;
 }
 
-.timer {
-  position: absolute;
-  top: 100px;
-  right: 3%;
-  font-size: 35px;
-  color: white;
-}
-
-.timer-display {
-  font-family: monospace;
-  font-weight: bold;
-  min-width: 70px;
-  display: inline-block;
-  text-align: center;
-}
-
 @keyframes slideIn {
   from {
     transform: translateX(100%);
@@ -1013,20 +1017,22 @@ export default {
 @media (max-width: 550px) {
   .timer {
     position: absolute;
-    top: 100px;
+    top: 130px;
     right: 6%;
     font-size: 25px;
     color: white;
   }
 
   .score {
-    font-size: 18px;
+    font-size: 20px;
+    margin-top: 10px;
   }
 
   .game-container {
     padding: 10px;
     gap: 5px;
     width: 90%;
+    margin-top: 20px;
   }
 
   .color-block {
