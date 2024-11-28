@@ -773,6 +773,23 @@ export default {
           // 刷新当前页排行榜
           this.initLeaderboard();
         }
+        else if (data.status === 400) {
+          const error = data.data.error;
+          this.$confirm(error + "联系方式在首页。", '警告', {
+            confirmButtonText: '继续',
+            cancelButtonText: '取消',
+            type: 'warning',
+            closeOnClickModal: false
+          }).then(() => {
+            // 用户选择继续，执行上传操作
+            this.$message.info('分数上传失败');
+          }).catch(() => {
+            // 用户选择取消，不执行任何操作
+            this.$message.info('分数上传失败');
+          });
+
+          this.showUploadDialog = false;
+        }
       } catch (error) {
         console.error('上传分数失败:', error);
         this.$message.error('上传分数失败，请重试');
