@@ -1,5 +1,6 @@
 <template>
   <div id="app">
+    <div class="background-random-profile"></div>
     <el-container>
       <el-header>
         <el-menu :router="true" mode="horizontal" :default-active="$route.path">
