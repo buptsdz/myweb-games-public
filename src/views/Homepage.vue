@@ -12,11 +12,11 @@
       </el-button>
     </div>
 
-    <div style="display: flex; flex-direction: row; margin-bottom: 6px; margin-top: 30px;">
+    <div style="display: flex; flex-direction: row; margin-bottom: 6px; margin-top: 30px;align-items: center;">
       <!-- 获取更新时间 -->
       <div class="tooltip1">
         <img :src="require('@/assets/static/images/tubiao/time.png')" class="responsive-img" />
-        <p id="bottom-time" style="color: #aeacac; margin: 0; margin-top: 2px; font-size: 16px;">{{ formattedTime }}</p>
+        <p id="bottom-time" style="color: #aeacac; margin: 0; margin-top: 1px; font-size: 16px;">{{ formattedTime }}</p>
         <span class="tooltiptext1">{{ tooltipTime }}</span>
       </div>
 
@@ -63,7 +63,7 @@ export default {
   data() {
     return {
       BackgroundMovingImagePath: require('@/assets/static/images/profile/sleep.jpg'),
-      updateDate: "2024-11-39 15:04:17", // 自定义更新日期
+      updateDate: "2024-11-29 15:17:17", // 自定义更新日期
       formattedTime: "", // 存储格式化的更新时间
       tooltipTime: "", // 存储显示在tooltip的更新时间
       viewCount: 0, // 存储浏览量
@@ -197,7 +197,12 @@ export default {
   padding-bottom: 10px;
 }
 
-.tooltip1 .responsive-img,
+.tooltip1 .responsive-img {
+  height: 23px;
+  width: 23px;
+  margin-right: 5px;
+}
+
 .tooltip2 .responsive-img {
   height: 22px;
   width: 22px;
