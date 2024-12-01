@@ -18,13 +18,18 @@ module.exports = defineConfig({
   // 是否在保存时使用eslint-loader检查
   lintOnSave: process.env.NODE_ENV !== 'production',
 
-  // 开发服务器配置
+  // 开发服务器配置后端路径
   devServer: {
     proxy: {
-      '/api': {
-        target: process.env.VUE_APP_API_URL,
+      '/api/django': {
+        target: process.env.VUE_APP_API_URL_dj,
         changeOrigin: true,
-        pathRewrite: { '^/api': '' },
+        pathRewrite: { '^/api/django': '' },
+      },
+      '/api/go': {
+        target: process.env.VUE_APP_API_URL_go,
+        changeOrigin: true,
+        pathRewrite: { '^/api/go': '' },
       },
     },
   },

@@ -94,13 +94,15 @@ export default {
         const data = response.data;
         if (data.status === 200) {
           this.viewCount = data.data.view_count;
-          this.tooltipViewCount = `浏览量：${this.viewCount}`;
+          this.tooltipViewCount = `页面浏览量：${this.viewCount}`;
         }
         else {
+          this.viewCount = '获取失败';
           this.tooltipViewCount = '获取浏览量失败';
         }
       }
       catch (error) {
+        this.viewCount = '获取失败';
         this.tooltipViewCount = '获取浏览量失败';
         console.error('Error fetching view count:', error);
       }
