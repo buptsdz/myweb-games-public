@@ -4,7 +4,7 @@ var JavaScriptObfuscator = require('webpack-obfuscator');
 
 module.exports = defineConfig({
   // 基本路径
-  publicPath: process.env.NODE_ENV === 'production' ? '/tools/' : '/',
+  publicPath: process.env.NODE_ENV === 'production' ? '/' : '/',
 
   // 防止源码泄露
   productionSourceMap: false,
@@ -13,7 +13,7 @@ module.exports = defineConfig({
   outputDir: 'dist',
 
   // 静态资源目录
-  assetsDir: 'static',
+  assetsDir: 'assets',
 
   // 是否在保存时使用eslint-loader检查
   lintOnSave: process.env.NODE_ENV !== 'production',

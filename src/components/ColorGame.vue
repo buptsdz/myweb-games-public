@@ -657,7 +657,7 @@ export default {
     // 获取指定页的排行榜数据
     async getLeaderboard(page) {
       try {
-        const response = await axiosRequest.post('/get_colorgame_ranking/', {
+        const response = await axiosRequest.post('/django/get_colorgame_ranking/', {
           page: page,
           page_size: this.pageSize,
           mode: this.gameMode
@@ -690,7 +690,7 @@ export default {
             //console.log(this.uploadForm.username);
             const checkResponse = await axiosRequest({
               method: 'post',
-              url: '/check_colorgame_username/',
+              url: '/django/check_colorgame_username/',
               data: {
                 username: this.uploadForm.username,
                 mode: this.gameMode
@@ -752,7 +752,7 @@ export default {
       try {
         const response = await axiosRequest({
           method: 'post',
-          url: '/upload_colorgame_scores/',
+          url: '/django/upload_colorgame_scores/',
           data: {
             username: this.uploadForm.username,
             score: this.score,

@@ -1,57 +1,61 @@
 <template>
-  <div class="home">
+  <div>
+    <!-- 背景游走头像 -->
     <div class="background-random-profile"></div>
-    <h1>我的工具集</h1>
-    <div class="tool-list">
-      <el-button type="primary" @click="$router.push('/color-game')">颜色游戏</el-button>
-      <!-- 后续可以在这里添加更多工具的入口 -->
-    </div>
-    <div class="tool-list">
-      <el-button type="primary">
-        <a href="http://sue.sparkflare.cn" target="_blank" style="color: inherit; text-decoration: none;">我的个人网站</a>
-      </el-button>
-    </div>
-
-    <div style="display: flex; flex-direction: row; margin-bottom: 6px; margin-top: 30px;align-items: center;">
-      <!-- 获取更新时间 -->
-      <div class="tooltip1">
-        <img :src="require('@/assets/static/images/tubiao/time.png')" class="responsive-img" />
-        <p id="bottom-time" style="color: #aeacac; margin: 0; margin-top: 1px; font-size: 16px;">{{ formattedTime }}</p>
-        <span class="tooltiptext1">{{ tooltipTime }}</span>
+    <div class="home">
+      <h1>我的工具集</h1>
+      <div class="tool-list">
+        <el-button type="primary" @click="$router.push('/color-game')">颜色游戏</el-button>
+        <!-- 后续可以在这里添加更多工具的入口 -->
+      </div>
+      <div class="tool-list">
+        <el-button type="primary">
+          <a href="http://sue.sparkflare.cn" target="_blank" style="color: inherit; text-decoration: none;">我的个人网站</a>
+        </el-button>
       </div>
 
-      <!-- 显示浏览量 -->
-      <div class="tooltip2">
-        <img :src="require('@/assets/static/images/tubiao/view_count.png')" class="responsive-img"
-          style="height: 20px;width: 20px;" />
-        <p id="view_count" style="color: #aeacac; margin: 0; margin-top: 3px; font-size: 16px;">{{ viewCount }}</p>
-        <span class="tooltiptext2">{{ tooltipViewCount }}</span>
-      </div>
-    </div>
+      <div style="display: flex; flex-direction: row; margin-bottom: 6px; margin-top: 30px;align-items: center;">
+        <!-- 获取更新时间 -->
+        <div class="tooltip1">
+          <img :src="require('@/assets/static/images/tubiao/time.png')" class="responsive-img" />
+          <p id="bottom-time" style="color: #aeacac; margin: 0; margin-top: 1px; font-size: 16px;">{{ formattedTime }}
+          </p>
+          <span class="tooltiptext1">{{ tooltipTime }}</span>
+        </div>
 
-    <!-- 底部联系方式 -->
-    <div class="contact-info">
-      <p>如果您对游戏有什么建议或意见，请</p>
-      <p>🔗联系作者：</p>
-      <p style="display:flex;align-items: center;justify-content: center;">
-        <a href="mailto:508936331@qq.com" class="contact-link">
-          <img :src="require('@/assets/static/images/software_logos/qq-email-logo.png')" alt="Email"
-            class="contact-icon-email" />
-          508936331@qq.com
-        </a>
-      </p>
-      <p style="display:flex;align-items: center;justify-content: center;">
-        <a href="https://github.com/buptsdz" target="_blank" class="contact-link">
-          <img :src="require('@/assets/static/images/software_logos/GitHub_logo.png')" alt="GitHub"
-            class="contact-icon-github" /> GitHub
-        </a>&nbsp;|&nbsp;
-        <a href="https://www.xiaohongshu.com/user/profile/624e74200000000010005b95" target="_blank"
-          class="contact-link">
-          <img :src="require('@/assets/static/images/software_logos/xiaohongshu.png')" alt="小红书"
-            class="contact-icon-xhs" />
-          小红书
-        </a>
-      </p>
+        <!-- 显示浏览量 -->
+        <div class="tooltip2">
+          <img :src="require('@/assets/static/images/tubiao/view_count.png')" class="responsive-img"
+            style="height: 20px;width: 20px;" />
+          <p id="view_count" style="color: #aeacac; margin: 0; margin-top: 3px; font-size: 16px;">{{ viewCount }}</p>
+          <span class="tooltiptext2">{{ tooltipViewCount }}</span>
+        </div>
+      </div>
+
+      <!-- 底部联系方式 -->
+      <div class="contact-info">
+        <p>如果您对游戏有什么建议或意见，请</p>
+        <p>🔗联系作者：</p>
+        <p style="display:flex;align-items: center;justify-content: center;">
+          <a href="mailto:508936331@qq.com" class="contact-link">
+            <img :src="require('@/assets/static/images/software_logos/qq-email-logo.png')" alt="Email"
+              class="contact-icon-email" />
+            508936331@qq.com
+          </a>
+        </p>
+        <p style="display:flex;align-items: center;justify-content: center;">
+          <a href="https://github.com/buptsdz" target="_blank" class="contact-link">
+            <img :src="require('@/assets/static/images/software_logos/GitHub_logo.png')" alt="GitHub"
+              class="contact-icon-github" /> GitHub
+          </a>&nbsp;|&nbsp;
+          <a href="https://www.xiaohongshu.com/user/profile/624e74200000000010005b95" target="_blank"
+            class="contact-link">
+            <img :src="require('@/assets/static/images/software_logos/xiaohongshu.png')" alt="小红书"
+              class="contact-icon-xhs" />
+            小红书
+          </a>
+        </p>
+      </div>
     </div>
   </div>
 </template>
@@ -82,7 +86,7 @@ export default {
       try {
         const response = await axiosRequest({
           method: 'get',
-          url: '/record_page_view/',
+          url: '/django/record_page_view/',
           params: {
             page_name: pageName,
           },
@@ -187,6 +191,38 @@ export default {
   animation-composition: accumulate;
 }
 
+@keyframes horizontal {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(calc(100vw - 110%));
+  }
+}
+
+@keyframes vertical {
+  from {
+    transform: translateY(0);
+  }
+
+  to {
+    transform: translateY(calc(90vh - 100%));
+  }
+}
+
+@keyframes colorX {
+  to {
+    filter: hue-rotate(2185deg);
+  }
+}
+
+@keyframes colorY {
+  to {
+    filter: hue-rotate(1769deg);
+  }
+}
+
 .tooltip1,
 .tooltip2 {
   display: flex;
@@ -256,38 +292,6 @@ export default {
 
   .tooltip2 {
     margin-left: 5%;
-  }
-}
-
-@keyframes horizontal {
-  from {
-    transform: translateX(0);
-  }
-
-  to {
-    transform: translateX(calc(95vw - 100%));
-  }
-}
-
-@keyframes vertical {
-  from {
-    transform: translateY(0);
-  }
-
-  to {
-    transform: translateY(calc(80vh - 100%));
-  }
-}
-
-@keyframes colorX {
-  to {
-    filter: hue-rotate(2185deg);
-  }
-}
-
-@keyframes colorY {
-  to {
-    filter: hue-rotate(1769deg);
   }
 }
 </style>
