@@ -301,19 +301,7 @@ export default {
         this.timed_playing = true;
         this.startTimer();
       }
-      if (newVal > this.level * 1000) {
-        //刷新网页
-        location.reload();
-        console.log('刷新网页');
-      }
     },
-    level(newVal) {
-      if (newVal > this.score + 2) {
-        //刷新网页
-        location.reload();
-        console.log('刷新网页');
-      }
-    }
   },
   methods: {
     // 更新分页页码数量
@@ -324,10 +312,13 @@ export default {
       // 假设每个页码按钮的宽度是 40px + 10px 的间隔
       const pagerWidth = 40; // 每个页码按钮宽度
       const gapWidth = 10;   // 每个按钮间隔
-      const maxPagerCount = Math.floor(screenWidth / (pagerWidth + gapWidth) - 2); // 最大显示的页码数
-      console.log(`当前屏幕宽度为 ${screenWidth}，可以显示 ${maxPagerCount} 个页码按钮。`);
-      // 设置 pagerCount 的值
-      this.pagerCount = maxPagerCount > 8 ? 8 : maxPagerCount; // 最大页码数限制
+      const maxPagerCount = Math.floor(screenWidth / (pagerWidth + gapWidth) - 3); // 最大显示的页码数
+
+      // 确保 pagerCount 在[5,21]范围内且为奇数
+      const validPagerCount = Math.max(5, Math.min(21, maxPagerCount));
+      console.log(`当前屏幕宽度为 ${screenWidth}，可以显示 ${validPagerCount} 个页码按钮。`);
+      this.pagerCount = validPagerCount % 2 === 0 ? validPagerCount - 1 : validPagerCount;
+      console.log(`最终显示页码数量为 ${this.pagerCount}。`);
     },
     // 开始倒计时
     startTimer() {
